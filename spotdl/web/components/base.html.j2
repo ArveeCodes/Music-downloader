@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="forest">
+
+<head>
+    <title>spotdl</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <script type="module" src="/assets/datastar.js"></script>
+
+    <link href="/assets/daisyui@5.css" rel="stylesheet" type="text/css" />
+    <link href="/assets/themes.css" rel="stylesheet" type="text/css" />
+
+    <script src="/assets/tailwindcss/browser@4.js"></script>
+
+    <script src="/assets/iconify-icon/iconify-icon.min.js"></script>
+</head>
+
+<style>
+    iconify-icon {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+    }
+
+    html, body {
+        min-height: 100vh;
+    }
+</style>
+
+<script>
+    function goto(location) {
+        window.location.href = location;
+    }
+</script>
+
+<body data-signals="{'client_id': ''}"
+    data-on-load="$client_id = localStorage.getItem('client_id'); @get('/client/load')" data-theme="forest">
+
+    <div class="bg-base-300 min-h-screen flex flex-col">
+        {% include "navbar.html.j2" %}
+
+        <div class="flex-1">
+            {% block content %}
+            {% endblock content %}
+        </div>
+
+        {% include "footer.html.j2" %}
+
+        <span id="component-settings"
+            data-on-signal-patch="@get('/client/component/settings-content'); localStorage.setItem('client_id', $client_id);"
+            data-on-signal-patch-filter="{include: /client_id/}">
+        </span>
+        <dialog id="settings_modal" class="modal">
+            <div id="component-settings-content"></div>
+            <form method="dialog" class="modal-backdrop">
+                <button>close</button>
+            </form>
+        </dialog>
+
+        <div id="toast-container" class="toast toast-end toast-bottom z-50"></div>
+    </div>
+
+</body>
+
+</html>

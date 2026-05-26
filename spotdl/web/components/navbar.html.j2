@@ -1,0 +1,44 @@
+<div class="navbar m-2 shadow-lg bg-neutral text-neutral-content rounded-box" style="width: auto !important">
+
+  <div class="px-2 mx-2 navbar-start" data-on-click="goto('/')">
+    <div class="bg-cover bg-no-repeat bg-center">
+      <img src="../assets/spotdl.svg" class="py-2 pr-2 w-10 center" />
+    </div>
+    <button class="text-lg font-bold hidden sm:inline">spotDL</button>
+  </div>
+
+  <div class="px-2 mx-2 navbar-center w-full sm:w-96">
+    <div id="search-input" data-signals="{search_term: '', loading: false}"
+      class="flex flex-row items-center space-x-2 sm:space-x-4 w-full"
+      data-on-load="@get('/client/component/search-input-rotating-placeholder')">
+      {% include "search-input-rotating-placeholder.html.j2" %}
+      <button id="search-button" class="btn btn-circle btn-primary btn-sm sm:btn-md"
+        data-on-click="goto('/search?q=' + encodeURIComponent($search_term))">
+        <iconify-icon icon="clarity:search-line" style="font-size: 20px"></iconify-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="navbar-end">
+    <div id="status" class="btn btn-ghost btn-circle btn-sm sm:btn-md m-1">
+      <iconify-icon icon="clarity:disconnect-line" style="font-size: 20px"></iconify-icon>
+    </div>
+
+    <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm sm:btn-md m-1">
+      <input type="checkbox" data-on-change="document.documentElement.setAttribute('data-theme', evt.target.checked ? 'light' : 'forest')" />
+      <iconify-icon icon="clarity:sun-line" class="swap-on" style="font-size: 20px"></iconify-icon>
+      <iconify-icon icon="clarity:moon-line" class="swap-off" style="font-size: 20px"></iconify-icon>
+    </label>
+
+    {% include "settings.html" %}
+
+    <div class="mx-1 sm:mx-2 indicator">
+      <div class="indicator-item indicator-top indicator-end badge badge-secondary badge-sm">
+        <p id="overall-completed-tasks">0</p>
+      </div>
+      <a class="btn btn-circle btn-sm sm:btn-md" data-on-click="goto('/downloads')">
+        <iconify-icon icon="clarity:download-cloud-line" style="font-size: 20px"></iconify-icon>
+      </a>
+    </div>
+  </div>
+</div>

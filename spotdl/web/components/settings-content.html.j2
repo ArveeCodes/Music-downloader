@@ -1,0 +1,53 @@
+<div class="modal-box relative" id="component-settings-content">
+    <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            data-on-click="@get('/client/settings')">&#x2715;</button>
+    </form>
+    <h3 class="font-bold text-lg">Download Settings</h3>
+    <div class="flex flex-col justify-center my-4 gap-4">
+        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 w-full">
+            <legend class="fieldset-legend">Audio Providers</legend>
+            {% for provider in AUDIO_PROVIDERS %}
+            <label class="label cursor-pointer">
+                <input type="checkbox" {% if provider in downloader_settings.audio_providers %} checked="checked" {%
+                    endif %} class="checkbox" id="{{ provider }}" name="{{ provider }}"
+                    data-on-change="if (evt.target.checked) { $downloader_settings.audio_providers.push('{{ provider }}') } else { $downloader_settings.audio_providers = $downloader_settings.audio_providers.filter(item => item !== '{{ provider }}') }" />
+                {{ provider }}
+            </label>
+            {% endfor %}
+        </fieldset>
+
+        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 w-full">
+            <legend class="fieldset-legend">Lyrics Providers</legend>
+            {% for provider in LYRICS_PROVIDERS %}
+            <label class="label cursor-pointer">
+                <input type="checkbox" {% if provider in downloader_settings.lyrics_providers %} checked="checked" {%
+                    endif %} class="checkbox" id="{{ provider }}" name="{{ provider }}"
+                    data-on-change="if (evt.target.checked) { $downloader_settings.lyrics_providers.push('{{ provider }}') } else { $downloader_settings.lyrics_providers = $downloader_settings.lyrics_providers.filter(item => item !== '{{ provider }}') }" />
+                {{ provider }}
+            </label>
+            {% endfor %}
+        </fieldset>
+
+        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 w-full">
+            <legend class="fieldset-legend">Output Format</legend>
+            <select class="select w-full"
+                data-on-change="$downloader_settings.format = evt.target.options[evt.target.selectedIndex].value">
+                {% for format in FORMATS %}
+                <option value="{{ format }}" {% if format == downloader_settings.format %}selected{% endif %}>
+                    {{ format }}
+                </option>
+                {% endfor %}
+            </select>
+        </fieldset>
+    </div>
+
+    <div id="settings-status"></div>
+
+    <div class="modal-action">
+        <form method="dialog">
+            <button class="btn" data-on-click="@get('/client/settings')">Cancel</button>
+        </form>
+        <button class="btn btn-primary" data-on-click="@post('/client/settings')">Save</button>
+    </div>
+</div>

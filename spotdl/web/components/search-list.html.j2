@@ -1,0 +1,41 @@
+<div id="search-list" data-signals="{'song_url': {}}">
+    {% for song in songs %}
+    <div key="{{loop.index0}}" class="card md:card-side card-bordered m-2 shadow-lg card-compact bg-base-100">
+        <figure class="aspect-square md:max-h-fit">
+            <img src="{{ song.cover_url }}" class="object-contain aspect-square md:max-h-44"
+                alt="{{ song.name }}" loading="lazy" />
+        </figure>
+        <div class="card-body">
+            <h2 class="card-title">
+                {{ song.name }}
+                {% if song.explicit %}
+                <div class="badge mx-0.5 badge-error">
+                    Explicit
+                </div>
+                {% endif %}
+            </h2>
+            <h3>
+                {% for artist in song.artists %}
+                {% if not loop.first %}
+                &#8226;
+                {% endif %}
+                {{ artist }}
+                {% endfor %}
+            </h3>
+            <h3 class="opacity-60">
+                {{ song.album_name }}
+            </h3>
+            <div class="card-actions absolute bottom-0 right-0 m-2">
+                <a class="btn btn-ghost btn-square" href="{{ song.url }}" target="_blank"
+                    rel="noopener noreferrer">
+                    <iconify-icon icon="clarity:link-line" style="font-size: 24px"></iconify-icon>
+                </a>
+                <button id="download-{{song.url}}" class="btn btn-primary btn-square"
+                    data-on-click="$song_url = '{{song.url}}'; @post('/client/download/');">
+                    <iconify-icon icon="clarity:floppy-line" style="font-size: 24px"></iconify-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

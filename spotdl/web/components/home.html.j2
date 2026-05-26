@@ -1,0 +1,51 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+
+<span id="component-home">
+    <div class="hero min-h-screen">
+        <div class="block text-center justify-center hero-content">
+            <div class="flex items-center justify-center">
+                <img src="/assets/spotdl.svg" class="mb-5 w-32 center" />
+            </div>
+            <div>
+                <h1 class="mb-3 text-5xl font-bold text-base-content">spotDL</h1>
+                <p class="mb-6 text-base-content opacity-80">
+                    Download your Spotify songs with embedded album art and metadata
+                </p>
+            </div>
+
+            <div class="w-full max-w-xl mx-auto" data-signals="{home_search: ''}">
+                <div class="join w-full shadow-lg">
+                    <input type="text" placeholder="Paste a Spotify URL or search for a song..."
+                        class="input input-bordered join-item w-full text-base-content"
+                        data-bind="home_search"
+                        data-on-keydown="evt.key === 'Enter' && $home_search && goto('/search?q=' + encodeURIComponent($home_search))">
+                    <button class="btn btn-primary join-item"
+                        data-on-click="$home_search && goto('/search?q=' + encodeURIComponent($home_search))">
+                        <iconify-icon icon="clarity:search-line" style="font-size: 20px"></iconify-icon>
+                        Search
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4 justify-center">
+                    <span class="badge badge-outline badge-lg opacity-60">Songs</span>
+                    <span class="badge badge-outline badge-lg opacity-60">Albums</span>
+                    <span class="badge badge-outline badge-lg opacity-60">Playlists</span>
+                    <span class="badge badge-outline badge-lg opacity-60">Artists</span>
+                </div>
+            </div>
+
+            <div role="alert" class="alert alert-info shadow-lg my-6 max-w-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    class="stroke-current flex-shrink-0 w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>
+                    Paste a Spotify URL to download a song, album, artist discography, or entire playlist.
+                </span>
+            </div>
+        </div>
+    </div>
+</span>
+{% endblock content %}
