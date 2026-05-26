@@ -44,10 +44,10 @@ router = APIRouter()
 @router.get("/api/connect")
 async def connect_endpoint(client_id: str):
     """
-    Websocket endpoint.
+    Connect a client.
 
     ### Arguments
-    - websocket: The WebSocket instance.
+    - client_id: The client's ID.
     """
 
     await Client(client_id).connect()

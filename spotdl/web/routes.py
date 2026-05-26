@@ -82,23 +82,22 @@ async def handle_get_client_load(datastar_signals: ReadSignals):
         # Generate a new client ID if not provided
         app_state.logger.warning("No client ID provided, generating a new one.")
         signals.client_id = uuid.uuid4().hex
-        client = Client(signals.client_id)
+
+    found_client = Client.get_instance(signals.client_id)
+    if found_client is None:
+        # Create a new client, reusing the same ID so browser stays in sync
+        app_state.logger.info(
+            f"Creating new client with ID {signals.client_id}..."
+        )
+        client = await asyncio.get_event_loop().run_in_executor(
+            None, Client, signals.client_id
+        )
     else:
-        found_client = Client.get_instance(signals.client_id)
-        if found_client is None:
-            # Create a new client if not found
-            app_state.logger.warning(
-                f"Client {signals.client_id} not found, creating new client..."
-            )
-            signals.client_id = uuid.uuid4().hex
-            client = Client(signals.client_id)
-        else:
-            client = found_client
+        client = found_client
     await client.connect()
 
-    # First send the client ID and then the home template.
+    # Send the client ID and status to the browser
     yield SSE.patch_elements("""<div id="status"></div>""")
-    # Send the client ID to the client
     yield SSE.patch_signals(
         {
             "client_id": client.client_id,
@@ -135,8 +134,11 @@ async def handle_get_client_search(datastar_signals: ReadSignals):
         signals.song_url = signals.search_term
         async for update in gen_download(signals):
             yield update
+        return
 
-    songs = get_search_results(signals.search_term)
+    songs = await asyncio.get_event_loop().run_in_executor(
+        None, get_search_results, signals.search_term
+    )
     yield SSE.patch_elements(
         templates.get_template("search-list.html.j2").render(
             songs=songs,
@@ -153,7 +155,7 @@ async def handle_get_client_downloads(datastar_signals: ReadSignals):
     app_state.logger.info("Loading downloads...")
     signals = handle_signals(datastar_signals)
     app_state.logger.info(f"[{signals.client_id}] Downloads requested.")
-    client = Client.get_instance(signals.client_id)
+    client = await wait_for_client(signals.client_id)
     if client is None:
         app_state.logger.warning(
             f"[{signals.client_id}] Client not found, cannot load downloads."
@@ -286,11 +288,34 @@ async def handle_post_client_download(datastar_signals: ReadSignals):
 # HELPERS
 
 
+async def wait_for_client(client_id: str, timeout: float = 15.0) -> Optional[Client]:
+    """
+    Wait for a client to become available, with a timeout.
+    Handles the race condition where /client/load is still creating the client
+    when other SSE endpoints fire.
+    """
+    client = Client.get_instance(client_id)
+    if client is not None:
+        return client
+
+    # Client is being created by /client/load in another request, wait briefly
+    elapsed = 0.0
+    interval = 0.5
+    while elapsed < timeout:
+        await asyncio.sleep(interval)
+        elapsed += interval
+        client = Client.get_instance(client_id)
+        if client is not None:
+            return client
+
+    return None
+
+
 async def gen_download(signals: Signals):
     """
     Generate the download process for the client.
     """
-    client = Client.get_instance(signals.client_id)
+    client = await wait_for_client(signals.client_id)
     if client is None:
         app_state.logger.warning(
             f"Client {signals.client_id} not found, cannot load downloads."

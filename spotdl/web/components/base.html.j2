@@ -35,14 +35,20 @@
     function goto(location) {
         window.location.href = location;
     }
+    function storageGet(key) {
+        try { return localStorage.getItem(key); } catch(e) { return null; }
+    }
+    function storageSet(key, val) {
+        try { localStorage.setItem(key, val); } catch(e) {}
+    }
     (function() {
-        var saved = localStorage.getItem('spotdl-theme');
+        var saved = storageGet('spotdl-theme');
         if (saved) document.documentElement.setAttribute('data-theme', saved);
     })();
 </script>
 
 <body data-signals="{'client_id': ''}"
-    data-on-load="$client_id = localStorage.getItem('client_id'); @get('/client/load')">
+    data-on-load="$client_id = storageGet('client_id') || ''; @get('/client/load')">
 
     <div class="bg-base-300 min-h-screen flex flex-col">
         {% include "navbar.html.j2" %}
@@ -61,7 +67,7 @@
 
         <!-- Settings -->
         <span id="component-settings"
-            data-on-signal-patch="@get('/client/component/settings-content'); localStorage.setItem('client_id', $client_id);"
+            data-on-signal-patch="@get('/client/component/settings-content'); storageSet('client_id', $client_id);"
             data-on-signal-patch-filter="{include: /client_id/}">
         </span>
         <dialog id="settings_modal" class="modal">
