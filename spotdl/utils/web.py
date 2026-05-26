@@ -61,7 +61,7 @@ class SPAStaticFiles(StaticFiles):
             response = await super().get_response(".", scope)
 
         response.headers.setdefault(
-            "Cache-Control", "max-age=0, no-cache, no-store, , must-revalidate"
+            "Cache-Control", "max-age=0, no-cache, no-store, must-revalidate"
         )
         response.headers.setdefault("Pragma", "no-cache")
         response.headers.setdefault("Expires", "0")
@@ -78,21 +78,15 @@ class Client:
     downloader: Downloader
     downloader_settings: DownloaderOptions
     disconnect_timer: Optional[threading.Timer] = None
-    # update_callback: Optional[Callable] = None
-    # update_stack: list[Dict[str, Any]] = []
 
     def __init__(
         self,
-        # websocket: WebSocket,
         client_id: str,
-        # update_callback: Optional[Callable] = None,
     ):
         """
-        Initialize the WebSocket handler.
+        Initialize the client handler.
         ### Arguments
-        - websocket: The WebSocket instance.
         - client_id: The client's ID.
-        - downloader_settings: The downloader settings.
         """
 
         self.downloader_settings = DownloaderOptions(
@@ -103,9 +97,7 @@ class Client:
             )  # type: ignore
         )
 
-        # self.websocket = websocket
         self.client_id = client_id
-        # self.update_callback = update_callback
         self.downloader = Downloader(
             settings=self.downloader_settings, loop=app_state.loop
         )
@@ -120,10 +112,8 @@ class Client:
 
     async def connect(self):
         """
-        Called when a new client connects to the websocket.
+        Called when a new client connects.
         """
-
-        # await self.websocket.accept()
 
         # Add the connection to the list of connections
         if self.disconnect_timer and self.disconnect_timer.is_alive():
@@ -170,12 +160,6 @@ class Client:
         ### Arguments
         - update: The update to send.
         """
-
-        # print(f"Sending update to {self.client_id}: {update}")
-        # await self.websocket.send_json(update)
-        # self.update_stack.append(update)
-        # if self.update_callback:
-        #     await self.update_callback(update)
 
     def song_update(self, progress_handler: SongTracker, message: str):
         """

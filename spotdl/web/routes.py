@@ -4,13 +4,10 @@ Module which contains the web client routes and functions.
 
 import asyncio
 import uuid
-from typing import Any, Optional, cast
+from typing import Optional, cast
 
-# from datastar_py.sse import DatastarEvent
 from datastar_py.fastapi import ReadSignals
-from datastar_py.fastapi import (
-    ServerSentEventGenerator as SSE,  # DatastarResponse,; read_signals,
-)
+from datastar_py.fastapi import ServerSentEventGenerator as SSE
 from datastar_py.fastapi import datastar_response
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
@@ -112,7 +109,7 @@ async def handle_get_client_load(datastar_signals: ReadSignals):
             yield SSE.patch_elements(f"""<div id="overall-completed-tasks">
                 {len(client.downloader.progress_handler.progress_tracker.songs)}
                 </div>""")
-            await asyncio.sleep(1)
+            await asyncio.sleep(3)
     finally:
         app_state.logger.info(f"[{signals.client_id}] Unloading client...")
         await client.disconnect()
@@ -174,7 +171,7 @@ async def handle_get_client_downloads(datastar_signals: ReadSignals):
                 client_song_downloads=client_song_downloads.values()
             )
         )
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
 
 
 @router.get("/client/settings")

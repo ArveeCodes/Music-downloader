@@ -41,44 +41,6 @@ __all__ = [
 router = APIRouter()
 
 
-# @router.websocket("/api/ws")
-# async def websocket_endpoint(websocket: WebSocket, client_id: str):
-#     """
-#     Websocket endpoint.
-
-#     ### Arguments
-#     - websocket: The WebSocket instance.
-#     """
-
-#     await Client(websocket, client_id).connect()
-
-#     try:
-#         while True:
-#             await websocket.receive_json()
-#     except WebSocketDisconnect:
-#         app_state.clients.pop(client_id, None)
-
-#         if (
-#             len(app_state.clients) == 0
-#             and app_state.web_settings["keep_alive"] is False
-#         ):
-#             app_state.logger.debug(
-#                 "No active connections, waiting 1s before shutting down"
-#             )
-
-#             await asyncio.sleep(1)
-
-#             # Wait 1 second before shutting down
-#             # This is to prevent the server from shutting down when a client
-#             # disconnects and reconnects quickly (e.g. when refreshing the page)
-#             if len(app_state.clients) == 0:
-#                 # Perform a clean exit
-#                 app_state.logger.info("Shutting down server, no active connections")
-#                 app_state.server.force_exit = True
-#                 app_state.server.should_exit = True
-#                 await app_state.server.shutdown()
-
-
 @router.get("/api/connect")
 async def connect_endpoint(client_id: str):
     """

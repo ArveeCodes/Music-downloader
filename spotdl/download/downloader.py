@@ -650,26 +650,11 @@ class Downloader:
             # Create the output directory if it doesn't exist
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
-            # Initialize audio downloader
-            audio_downloader: Union[AudioProvider, Piped]
-            if self.settings["audio_providers"][0] == "piped":
-                audio_downloader = Piped(
-                    output_format=self.settings["format"],
-                    cookie_file=self.settings["cookie_file"],
-                    search_query=self.settings["search_query"],
-                    filter_results=self.settings["filter_results"],
-                    yt_dlp_args=self.settings["yt_dlp_args"],
-                )
-            else:
-                audio_downloader = AudioProvider(
-                    output_format=self.settings["format"],
-                    cookie_file=self.settings["cookie_file"],
-                    search_query=self.settings["search_query"],
-                    filter_results=self.settings["filter_results"],
-                    yt_dlp_args=self.settings["yt_dlp_args"],
-                )
+            # Reuse the pre-initialized audio provider instead of creating a new one per song
+            audio_downloader = self.audio_providers[0]
 
-            # Add progress hook to the audio provider
+            # Clear existing progress hooks and add the current song's hook
+            audio_downloader.audio_handler._progress_hooks.clear()
             audio_downloader.audio_handler.add_progress_hook(
                 display_progress_tracker.yt_dlp_progress_hook
             )

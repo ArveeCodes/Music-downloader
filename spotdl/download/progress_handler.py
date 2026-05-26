@@ -118,7 +118,8 @@ class ProgressTracker:
     Similar to Rich Progress but without any TUI elements.
     """
 
-    songs: Dict[str, ClientSongDownload] = {}
+    def __init__(self):
+        self.songs: Dict[str, ClientSongDownload] = {}
 
     def add(self, song: Song):
         """
