@@ -1,13 +1,14 @@
 {% extends "base.html.j2" %}
 {% block content %}
 <div data-signals='{"search_term": {{ search_term|tojson }}}'>
-  <div class="min-h-screen px-4 py-8">
-    <span id="search-list" class="flex items-center justify-center py-16">
-      <div class="text-center fade-up" data-on-load="@get('/client/search')">
-        <span class="loading loading-spinner loading-lg neon"></span>
-        <p class="mt-4 text-xs opacity-30 tracking-wide">Searching...</p>
-      </div>
-    </span>
-  </div>
+    <div class="min-h-screen px-4 py-6">
+        <span id="search-list" class="flex items-center justify-center py-20">
+            <div class="text-center fade-in-up" data-on-load="@get('/client/search')">
+                <span class="loading loading-spinner loading-lg text-spotify"></span>
+                <p class="mt-4 text-sm opacity-50">Searching...</p>
+            </div>
+        </span>
+    </div>
 </div>
+
 {% endblock content %}

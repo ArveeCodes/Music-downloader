@@ -13,106 +13,77 @@
 </head>
 
 <style>
-    html, body { min-height: 100vh; overflow-x: hidden; }
-    iconify-icon { display: inline-block; width: 1em; height: 1em; }
-
-    /* === Core Theme === */
-    .app-bg {
-        background: #030712;
-        background-image:
-            radial-gradient(ellipse at 25% 0%, rgba(0,212,255,0.04) 0%, transparent 50%),
-            radial-gradient(ellipse at 75% 100%, rgba(0,102,255,0.03) 0%, transparent 50%);
+    html, body {
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+    iconify-icon {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
     }
 
-    /* Glass card */
-    .glass {
-        background: rgba(255,255,255,0.02);
-        border: 1px solid rgba(0,212,255,0.06);
+    .gradient-bg {
+        background: linear-gradient(135deg, #0a0a0a 0%, #111827 30%, #0f172a 60%, #1e1b4b 100%);
+        background-size: 300% 300%;
+        animation: gradientShift 20s ease infinite;
+    }
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 12px;
     }
-    .glass:hover {
-        background: rgba(0,212,255,0.03);
-        border-color: rgba(0,212,255,0.12);
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* Accent */
-    .neon { color: #00d4ff; }
-    .neon-bg { background: #00d4ff; }
-    .neon-glow { box-shadow: 0 0 24px rgba(0,212,255,0.12); }
-
-    /* Buttons */
-    .btn-neon {
-        background: linear-gradient(135deg, #00d4ff 0%, #0066ff 100%);
-        color: #020617;
-        border: none;
-        font-weight: 600;
-    }
-    .btn-neon:hover {
-        background: linear-gradient(135deg, #22d3ee 0%, #3b82f6 100%);
-        box-shadow: 0 0 20px rgba(0,212,255,0.25);
-    }
-    .btn-glass {
-        background: rgba(0,212,255,0.06);
-        color: #00d4ff;
-        border: 1px solid rgba(0,212,255,0.12);
-    }
-    .btn-glass:hover {
-        background: rgba(0,212,255,0.12);
-        border-color: rgba(0,212,255,0.25);
+    .glass {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 12px;
     }
 
-    /* Progress */
-    .progress-neon::-webkit-progress-value {
-        background: linear-gradient(90deg, #00d4ff, #0066ff);
+    .transition-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .text-spotify { color: #1ed760; }
+    .bg-spotify { background-color: #1ed760; }
+    .border-spotify { border-color: #1ed760; }
+
+    .progress-spotify::-webkit-progress-value {
+        background: linear-gradient(90deg, #1ed760, #1db954);
         border-radius: 999px;
     }
-    .progress-neon::-moz-progress-bar {
-        background: linear-gradient(90deg, #00d4ff, #0066ff);
+    .progress-spotify::-moz-progress-bar {
+        background: linear-gradient(90deg, #1ed760, #1db954);
         border-radius: 999px;
     }
 
-    /* Mono */
-    .mono { font-family: 'SF Mono','Cascadia Code','Consolas','Fira Code',monospace; }
-
-    /* Pulse indicator */
-    @keyframes neon-pulse {
-        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
-        50% { opacity: 0.6; box-shadow: 0 0 0 6px rgba(0,212,255,0); }
-    }
-    .pulse-dot {
-        width: 7px; height: 7px;
-        background: #00d4ff;
-        border-radius: 50%;
-        animation: neon-pulse 2s ease-in-out infinite;
-    }
-
-    /* Separator line */
-    .neon-line { height: 1px; background: linear-gradient(90deg, transparent, rgba(0,212,255,0.12), transparent); }
-
-    /* Transitions */
-    .ts { transition: all 0.2s ease; }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.08); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.15); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-    /* Animations */
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-up { animation: fadeUp 0.3s ease forwards; }
-    .stagger > * { opacity: 0; animation: fadeUp 0.25s ease forwards; }
-    .stagger > *:nth-child(1) { animation-delay:.03s }
-    .stagger > *:nth-child(2) { animation-delay:.06s }
-    .stagger > *:nth-child(3) { animation-delay:.09s }
-    .stagger > *:nth-child(4) { animation-delay:.12s }
-    .stagger > *:nth-child(5) { animation-delay:.15s }
-    .stagger > *:nth-child(6) { animation-delay:.18s }
-    .stagger > *:nth-child(7) { animation-delay:.21s }
-    .stagger > *:nth-child(8) { animation-delay:.24s }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
 
-    /* Input glow */
-    .input-glow:focus-within { border-color: rgba(0,212,255,0.3); box-shadow: 0 0 0 3px rgba(0,212,255,0.06); }
+    .stagger-children > * { opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
+    .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+    .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+    .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+    .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+    .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+    .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
 </style>
 
 <script>
@@ -128,13 +99,15 @@
 <body data-signals="{'client_id': ''}"
     data-on-load="$client_id = storageGet('client_id') || ''; @get('/client/load')">
 
-    <div class="app-bg min-h-screen flex flex-col text-gray-300">
+    <div class="gradient-bg min-h-screen flex flex-col">
         {% include "navbar.html.j2" %}
         <div class="flex-1">
             {% block content %}{% endblock content %}
         </div>
         {% include "footer.html.j2" %}
+
         <div id="toast-container" class="toast toast-end toast-bottom z-50"></div>
+
         <span id="component-settings"
             data-on-signal-patch="@get('/client/component/settings-content'); storageSet('client_id', $client_id);"
             data-on-signal-patch-filter="{include: /client_id/}">

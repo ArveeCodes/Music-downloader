@@ -125,7 +125,7 @@ async def handle_get_client_load(datastar_signals: ReadSignals):
 
     # Send the client ID and connected status to the browser
     yield SSE.patch_elements("""<div id="status" class="btn btn-ghost btn-circle btn-sm opacity-80">
-        <iconify-icon icon="clarity:check-circle-line" style="font-size: 18px; color: #00d4ff;"></iconify-icon>
+        <iconify-icon icon="clarity:check-circle-line" style="font-size: 20px; color: #1ed760;"></iconify-icon>
     </div>""")
     yield SSE.patch_signals(
         {
@@ -498,9 +498,9 @@ async def gen_download(signals: Signals):
     # Use a safe HTML ID derived from URL hash to prevent XSS
     btn_id = _safe_html_id(signals.song_url)
     yield SSE.patch_elements(f"""
-            <button id="{btn_id}" class="btn btn-circle btn-xs border-0"
-                style="background: rgba(0,212,255,0.1);">
-                <span class="loading loading-spinner loading-xs" style="color: #00d4ff;"></span>
+            <button id="{btn_id}" class="btn btn-circle btn-sm border-0"
+                style="background: rgba(30,215,96,0.2);">
+                <span class="loading loading-spinner loading-xs" style="color: #1ed760;"></span>
             </button>
         """)
 
@@ -533,9 +533,9 @@ async def gen_download(signals: Signals):
             """)
         else:
             yield SSE.patch_elements(f"""
-                <button id="{btn_id}" class="btn btn-circle btn-xs border-0"
-                    style="background: rgba(0,212,255,0.15);">
-                    <iconify-icon icon="clarity:check-line" style="font-size: 14px; color: #00d4ff;"></iconify-icon>
+                <button id="{btn_id}" class="btn btn-circle btn-sm border-0 text-black"
+                    style="background: #1ed760;">
+                    <iconify-icon icon="clarity:check-line" style="font-size: 14px;"></iconify-icon>
                 </button>
             """)
 

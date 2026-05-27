@@ -1,43 +1,50 @@
-<div class="navbar px-3 sm:px-5 py-1.5 sticky top-0 z-40"
-    style="background: rgba(3,7,18,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,212,255,0.06);">
+<div class="navbar px-4 py-2 sticky top-0 z-40" style="background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06);">
 
-  <div class="navbar-start">
-    <button class="btn btn-ghost btn-sm gap-2 ts hover:bg-white/5" data-on-click="goto('/')">
-      <img src="../assets/spotdl.svg" class="w-7 h-7" alt="spotDL" />
-      <span class="text-sm font-bold tracking-widest hidden sm:inline neon uppercase">spot<span class="text-white/90">DL</span></span>
-    </button>
+  <!-- Logo -->
+  <div class="navbar-start gap-2 cursor-pointer" data-on-click="goto('/')">
+    <img src="../assets/spotdl.svg" class="w-8 h-8" alt="spotDL" />
+    <span class="text-lg font-bold tracking-tight hidden sm:inline text-spotify">spotDL</span>
   </div>
 
-  <div class="navbar-center w-full max-w-sm px-2">
+  <!-- Search Bar -->
+  <div class="navbar-center w-full max-w-md px-2">
     <div id="search-input" data-signals="{search_term: '', loading: false}"
       class="flex items-center w-full gap-2"
       data-on-load="@get('/client/component/search-input-rotating-placeholder')">
       {% include "search-input-rotating-placeholder.html.j2" %}
       <button id="search-button"
-        class="btn btn-circle btn-sm btn-neon ts"
+        class="btn btn-circle btn-sm border-0 text-black hover:brightness-110 transition-smooth"
+        style="background: #1ed760;"
         data-on-click="if($search_term.trim()) goto('/search?q=' + encodeURIComponent($search_term))">
-        <iconify-icon icon="clarity:search-line" style="font-size: 15px"></iconify-icon>
+        <iconify-icon icon="clarity:search-line" style="font-size: 18px"></iconify-icon>
       </button>
     </div>
   </div>
 
-  <div class="navbar-end gap-0.5">
-    <div id="status" class="btn btn-ghost btn-circle btn-sm opacity-40 hover:opacity-90 ts">
-      <iconify-icon icon="clarity:disconnect-line" style="font-size: 17px"></iconify-icon>
+  <!-- Right Actions -->
+  <div class="navbar-end gap-1">
+    <!-- Connection Status -->
+    <div id="status" class="btn btn-ghost btn-circle btn-sm opacity-50 hover:opacity-100 transition-smooth">
+      <iconify-icon icon="clarity:disconnect-line" style="font-size: 20px"></iconify-icon>
     </div>
-    <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm opacity-40 hover:opacity-90 ts">
+
+    <!-- Theme Toggle -->
+    <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm opacity-50 hover:opacity-100 transition-smooth">
         <input type="checkbox" data-on-change="document.documentElement.setAttribute('data-theme', evt.target.checked ? 'light' : 'forest'); storageSet('spotdl-theme', evt.target.checked ? 'light' : 'forest')" />
-        <iconify-icon icon="clarity:sun-line" class="swap-on" style="font-size: 15px"></iconify-icon>
-        <iconify-icon icon="clarity:moon-line" class="swap-off" style="font-size: 15px"></iconify-icon>
+        <iconify-icon icon="clarity:sun-line" class="swap-on" style="font-size: 18px"></iconify-icon>
+        <iconify-icon icon="clarity:moon-line" class="swap-off" style="font-size: 18px"></iconify-icon>
     </label>
+
+    <!-- Settings -->
     {% include "settings.html" %}
-    <div class="indicator ml-1">
-      <span class="indicator-item badge badge-xs font-bold neon-bg text-black border-0">
-        <span id="overall-completed-tasks" class="text-[10px] mono">0</span>
+
+    <!-- Downloads -->
+    <div class="indicator">
+      <span class="indicator-item badge badge-xs border-0 text-black font-bold" style="background: #1ed760;">
+        <p id="overall-completed-tasks" class="text-xs">0</p>
       </span>
-      <button class="btn btn-ghost btn-circle btn-sm opacity-40 hover:opacity-90 ts"
-        data-on-click="goto('/downloads')">
-        <iconify-icon icon="clarity:download-cloud-line" style="font-size: 17px"></iconify-icon>
+      <button class="btn btn-ghost btn-circle btn-sm opacity-50 hover:opacity-100 transition-smooth" data-on-click="goto('/downloads')">
+        <iconify-icon icon="clarity:download-cloud-line" style="font-size: 20px"></iconify-icon>
       </button>
     </div>
   </div>

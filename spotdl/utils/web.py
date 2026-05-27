@@ -94,7 +94,6 @@ class Client:
         # (client_id is used in file paths for session directories)
         if not re.match(r'^[a-f0-9]{1,64}$', client_id):
             raise ValueError(f"Invalid client_id format: {client_id!r}")
-
         self.client_id = client_id
         self._initialized = False
 
