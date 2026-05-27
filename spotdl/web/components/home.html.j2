@@ -1,40 +1,55 @@
 {% extends "base.html.j2" %}
-
 {% block content %}
-
 <span id="component-home">
-    <div class="hero min-h-[80vh]">
-        <div class="block text-center justify-center hero-content">
-            <div class="flex items-center justify-center">
-                <img src="/assets/spotdl.svg" class="mb-5 w-32 center" />
-            </div>
-            <div>
-                <h1 class="mb-5 text-5xl font-bold text-base-content">spotDL</h1>
-                <p class="mb-5 text-base-content">
-                    Download your Spotify songs with embedded album art and metadata
-                </p>
-            </div>
+  <div class="flex items-center justify-center min-h-[82vh] px-4">
+    <div class="text-center max-w-lg mx-auto fade-up">
 
-            <div class="w-full max-w-xl" data-signals="{home_search: ''}">
-                <div class="join w-full">
-                    <input type="text" placeholder="Paste a Spotify URL or search for a song..."
-                        class="input input-bordered join-item w-full"
-                        data-bind="home_search"
-                        data-on-keydown="if (evt.key === 'Enter' && $home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))" />
-                    <button class="btn btn-primary join-item"
-                        data-on-click="if ($home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))">
-                        <iconify-icon icon="clarity:search-line" style="font-size: 20px"></iconify-icon>
-                        Search
-                    </button>
-                </div>
-                <div class="flex flex-wrap justify-center gap-2 mt-4">
-                    <span class="badge badge-outline badge-lg">Songs</span>
-                    <span class="badge badge-outline badge-lg">Albums</span>
-                    <span class="badge badge-outline badge-lg">Playlists</span>
-                    <span class="badge badge-outline badge-lg">Artists</span>
-                </div>
-            </div>
+      <!-- Logo -->
+      <div class="flex justify-center mb-8">
+        <div class="relative">
+          <div class="absolute inset-[-16px] rounded-full opacity-20"
+            style="background: radial-gradient(circle, rgba(0,212,255,0.3) 0%, transparent 70%);"></div>
+          <img src="/assets/spotdl.svg" class="relative w-16 sm:w-20" alt="spotDL" />
         </div>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-3xl sm:text-4xl font-black tracking-tight mb-2">
+        <span class="neon">spot</span><span class="text-white">DL</span>
+      </h1>
+      <p class="text-xs sm:text-sm opacity-30 mb-10 max-w-xs mx-auto tracking-wide">
+        Download songs, albums &amp; playlists with full metadata
+      </p>
+
+      <!-- Search -->
+      <div data-signals="{home_search: ''}">
+        <div class="flex items-center gap-2 rounded-xl px-4 py-2 ts input-glow"
+          style="background: rgba(0,212,255,0.03); border: 1px solid rgba(0,212,255,0.08);">
+          <iconify-icon icon="clarity:search-line" style="font-size: 16px" class="neon opacity-40 shrink-0"></iconify-icon>
+          <input type="text"
+            placeholder="Paste a Spotify URL or search..."
+            class="w-full bg-transparent border-0 py-2 text-white placeholder-gray-600 focus:outline-none text-sm"
+            data-bind="home_search"
+            data-on-keydown="if (evt.key === 'Enter' && $home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))" />
+          <button class="btn btn-sm btn-neon rounded-lg shrink-0 ts"
+            data-on-click="if ($home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))">
+            Go
+          </button>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-2 mt-6">
+          <span class="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest opacity-20 ts hover:opacity-40"
+            style="border: 1px solid rgba(0,212,255,0.1);">Songs</span>
+          <span class="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest opacity-20 ts hover:opacity-40"
+            style="border: 1px solid rgba(0,212,255,0.1);">Albums</span>
+          <span class="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest opacity-20 ts hover:opacity-40"
+            style="border: 1px solid rgba(0,212,255,0.1);">Playlists</span>
+          <span class="px-3 py-1 rounded-full text-[10px] uppercase tracking-widest opacity-20 ts hover:opacity-40"
+            style="border: 1px solid rgba(0,212,255,0.1);">Artists</span>
+        </div>
+      </div>
+
     </div>
+  </div>
 </span>
 {% endblock content %}

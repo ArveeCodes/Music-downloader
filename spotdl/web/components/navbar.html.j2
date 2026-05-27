@@ -1,41 +1,44 @@
-<div class="navbar m-2 shadow-lg bg-neutral text-neutral-content rounded-box" style="width: auto !important">
+<div class="navbar px-3 sm:px-5 py-1.5 sticky top-0 z-40"
+    style="background: rgba(3,7,18,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,212,255,0.06);">
 
-  <div class="px-2 mx-2 navbar-start" data-on-click="goto('/')">
-    <div class="bg-cover bg-no-repeat bg-center">
-      <img src="../assets/spotdl.svg" class="py-2 pr-2 w-10 center" />
-    </div>
-    <button class="text-lg font-bold hidden sm:inline">spotDL</button>
+  <div class="navbar-start">
+    <button class="btn btn-ghost btn-sm gap-2 ts hover:bg-white/5" data-on-click="goto('/')">
+      <img src="../assets/spotdl.svg" class="w-7 h-7" alt="spotDL" />
+      <span class="text-sm font-bold tracking-widest hidden sm:inline neon uppercase">spot<span class="text-white/90">DL</span></span>
+    </button>
   </div>
-  <div class="flex px-2 mx-2 navbar-center w-96 space-x-4">
+
+  <div class="navbar-center w-full max-w-sm px-2">
     <div id="search-input" data-signals="{search_term: '', loading: false}"
-      class="flex flex-row items-center space-x-4 w-full"
+      class="flex items-center w-full gap-2"
       data-on-load="@get('/client/component/search-input-rotating-placeholder')">
       {% include "search-input-rotating-placeholder.html.j2" %}
-      <button id="search-button" class="btn btn-circle btn-sm sm:btn-md btn-primary" data-on-click="goto('/search?q=' + $search_term )">
-        <iconify-icon icon="clarity:search-line" style="font-size: 24px"></iconify-icon>
+      <button id="search-button"
+        class="btn btn-circle btn-sm btn-neon ts"
+        data-on-click="if($search_term.trim()) goto('/search?q=' + encodeURIComponent($search_term))">
+        <iconify-icon icon="clarity:search-line" style="font-size: 15px"></iconify-icon>
       </button>
     </div>
   </div>
-  <div class="navbar-end">
-    <div id="status" class="btn btn-ghost btn-circle btn-sm sm:btn-md m-1 sm:m-2">
-      <iconify-icon icon="clarity:disconnect-line" style="font-size: 24px"></iconify-icon>
+
+  <div class="navbar-end gap-0.5">
+    <div id="status" class="btn btn-ghost btn-circle btn-sm opacity-40 hover:opacity-90 ts">
+      <iconify-icon icon="clarity:disconnect-line" style="font-size: 17px"></iconify-icon>
     </div>
-
-    <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm sm:btn-md">
+    <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm opacity-40 hover:opacity-90 ts">
         <input type="checkbox" data-on-change="document.documentElement.setAttribute('data-theme', evt.target.checked ? 'light' : 'forest'); storageSet('spotdl-theme', evt.target.checked ? 'light' : 'forest')" />
-        <iconify-icon icon="clarity:sun-line" class="swap-on" style="font-size: 20px"></iconify-icon>
-        <iconify-icon icon="clarity:moon-line" class="swap-off" style="font-size: 20px"></iconify-icon>
+        <iconify-icon icon="clarity:sun-line" class="swap-on" style="font-size: 15px"></iconify-icon>
+        <iconify-icon icon="clarity:moon-line" class="swap-off" style="font-size: 15px"></iconify-icon>
     </label>
-
     {% include "settings.html" %}
-
-    <div class="mx-1 sm:mx-2 indicator">
-      <div class="indicator-item indicator-top indicator-end badge badge-secondary badge-sm sm:badge-md">
-        <p id="overall-completed-tasks">0</p>
-      </div>
-      <a class="btn btn-circle btn-sm sm:btn-md" data-on-click="goto('/downloads')">
-        <iconify-icon icon="clarity:download-cloud-line" style="font-size: 24px"></iconify-icon>
-      </a>
+    <div class="indicator ml-1">
+      <span class="indicator-item badge badge-xs font-bold neon-bg text-black border-0">
+        <span id="overall-completed-tasks" class="text-[10px] mono">0</span>
+      </span>
+      <button class="btn btn-ghost btn-circle btn-sm opacity-40 hover:opacity-90 ts"
+        data-on-click="goto('/downloads')">
+        <iconify-icon icon="clarity:download-cloud-line" style="font-size: 17px"></iconify-icon>
+      </button>
     </div>
   </div>
 </div>

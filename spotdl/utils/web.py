@@ -6,6 +6,7 @@ FastAPI routes/classes etc.
 import asyncio
 import logging
 import mimetypes
+import re
 import threading
 from argparse import Namespace
 from typing import Any, Dict, Optional, Union
@@ -89,6 +90,18 @@ class Client:
         - client_id: The client's ID.
         """
 
+        # Validate client_id to prevent path traversal attacks
+        # (client_id is used in file paths for session directories)
+        if not re.match(r'^[a-f0-9]{1,64}$', client_id):
+            raise ValueError(f"Invalid client_id format: {client_id!r}")
+
+        self.client_id = client_id
+        self._initialized = False
+
+        # Register immediately so concurrent requests find this client
+        # even before slow initialization completes
+        app_state.clients[self.client_id] = self
+
         self.downloader_settings = DownloaderOptions(
             **create_settings_type(
                 Namespace(config=False),
@@ -97,7 +110,6 @@ class Client:
             )  # type: ignore
         )
 
-        self.client_id = client_id
         self.downloader = Downloader(
             settings=self.downloader_settings, loop=app_state.loop
         )
@@ -109,6 +121,7 @@ class Client:
         )
 
         self.disconnect_timer = None
+        self._initialized = True
 
     async def connect(self):
         """
@@ -141,17 +154,24 @@ class Client:
     def disconnect_now(self):
         """
         Disconnect the client.
+        Routes dict mutation through the event loop to ensure thread safety,
+        since this is called from a threading.Timer background thread.
         """
-        # Remove the connection from the list of connections
-        if self.client_id in app_state.clients:
-            # app_state.clients.pop(client_id, None)
-            del app_state.clients[self.client_id]
-            app_state.logger.info("Client %s disconnected", self.client_id)
-        else:
-            app_state.logger.warning(
-                "Client %s not found on disconnect", self.client_id
-            )
-        self.disconnect_timer = None
+        def _remove_client():
+            if self.client_id in app_state.clients:
+                del app_state.clients[self.client_id]
+                app_state.logger.info("Client %s disconnected", self.client_id)
+            else:
+                app_state.logger.warning(
+                    "Client %s not found on disconnect", self.client_id
+                )
+            self.disconnect_timer = None
+
+        try:
+            app_state.loop.call_soon_threadsafe(_remove_client)
+        except RuntimeError:
+            # Event loop is closed or not running, do it directly
+            _remove_client()
 
     async def send_update(self, update: Dict[str, Any]):
         """
@@ -211,8 +231,11 @@ class ApplicationState:
     loop: asyncio.AbstractEventLoop
     web_settings: WebOptions
     downloader_settings: DownloaderOptions
-    clients: Dict[str, Client] = {}
     logger: logging.Logger
+
+    def __init__(self):
+        # Instance-level dict to avoid shared mutable class variable
+        self.clients: Dict[str, Client] = {}
 
 
 app_state: ApplicationState = ApplicationState()

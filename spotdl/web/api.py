@@ -187,20 +187,27 @@ async def download_file(
     - returns the file response, filename specified to return as attachment.
     """
 
-    expected_path = str((get_spotdl_path() / "web/sessions").absolute())
+    expected_path = (get_spotdl_path() / "web/sessions").resolve()
     if state.web_settings.get("web_use_output_dir", False):
-        expected_path = str(
-            Path(client.downloader_settings["output"].split("{", 1)[0]).absolute()
-        )
+        expected_path = Path(
+            client.downloader_settings["output"].split("{", 1)[0]
+        ).resolve()
 
-    if (not file.endswith(client.downloader_settings["format"])) or (
-        not file.startswith(expected_path)
+    # Resolve the requested file path to its canonical form to prevent
+    # path traversal attacks (e.g. ../../etc/passwd)
+    real_file = Path(file).resolve()
+
+    if (not real_file.name.endswith(client.downloader_settings["format"])) or (
+        not str(real_file).startswith(str(expected_path))
     ):
         raise HTTPException(status_code=400, detail="Invalid download path.")
 
+    if not real_file.is_file():
+        raise HTTPException(status_code=404, detail="File not found.")
+
     return FileResponse(
-        file,
-        filename=os.path.basename(file),
+        str(real_file),
+        filename=real_file.name,
     )
 
 
