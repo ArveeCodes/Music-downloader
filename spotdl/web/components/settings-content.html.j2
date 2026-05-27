@@ -1,54 +1,80 @@
-<div class="modal-box relative" id="component-settings-content">
+<div class="modal-box relative glass-card rounded-2xl border-0" id="component-settings-content"
+    style="background: rgba(20, 20, 30, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08);">
     <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            data-on-click="@get('/client/settings')">✕</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 opacity-40 hover:opacity-100"
+            data-on-click="@get('/client/settings')">
+            <iconify-icon icon="clarity:close-line" style="font-size: 18px"></iconify-icon>
+        </button>
     </form>
-    <h3 class="font-bold text-lg">Download Settings</h3>
-    <div class="flex flex-col justify-center my-4">
-        <!-- audio_provider -->
-        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box w-64 border p-4 w-full">
-            <legend class="fieldset-legend">Audio Providers</legend>
-            {% for provider in AUDIO_PROVIDERS %}
-            <label class="label cursor-pointer">
-                <input type="checkbox" {% if provider in downloader_settings.audio_providers %} checked="checked" {%
-                    endif %} class="checkbox" id="{{ provider }}" name="{{ provider }}"
-                    data-on-change="if (evt.target.checked) { $downloader_settings.audio_providers.push('{{ provider }}') } else { $downloader_settings.audio_providers = $downloader_settings.audio_providers.filter(item => item !== '{{ provider }}') }" />
-                {{ provider }}
-            </label>
-            {% endfor %}
-        </fieldset>
-        <!-- lyrics_provider -->
-        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box w-64 border p-4 w-full">
-            <legend class="fieldset-legend">Lyrics Providers</legend>
-            {% for provider in LYRICS_PROVIDERS %}
-            <label class="label cursor-pointer">
-                <input type="checkbox" {% if provider in downloader_settings.lyrics_providers %} checked="checked" {%
-                    endif %} class="checkbox" id="{{ provider }}" name="{{ provider }}"
-                    data-on-change="if (evt.target.checked) { $downloader_settings.lyrics_providers.push('{{ provider }}') } else { $downloader_settings.lyrics_providers = $downloader_settings.lyrics_providers.filter(item => item !== '{{ provider }}') }" />
-                {{ provider }}
-            </label>
-            {% endfor %}
-        </fieldset>
-        <!-- format -->
-        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box w-64 border p-4 w-full">
-            <legend class="fieldset-legend">Output Format</legend>
-            <select class="select w-full"
+
+    <div class="flex items-center gap-2 mb-6">
+        <iconify-icon icon="clarity:settings-line" style="font-size: 22px" class="text-spotify"></iconify-icon>
+        <h3 class="font-bold text-lg text-white">Settings</h3>
+    </div>
+
+    <div class="flex flex-col gap-4">
+        <!-- Audio Providers -->
+        <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+            <h4 class="text-sm font-semibold text-white/70 mb-3 uppercase tracking-wider">Audio Providers</h4>
+            <div class="flex flex-col gap-2">
+                {% for provider in AUDIO_PROVIDERS %}
+                <label class="flex items-center gap-3 cursor-pointer px-2 py-1.5 rounded-lg hover:bg-white/[0.03] transition-smooth">
+                    <input type="checkbox" {% if provider in downloader_settings.audio_providers %} checked="checked" {% endif %}
+                        class="checkbox checkbox-sm" style="border-color: rgba(255,255,255,0.2);"
+                        id="{{ provider }}" name="{{ provider }}"
+                        data-on-change="if (evt.target.checked) { $downloader_settings.audio_providers.push('{{ provider }}') } else { $downloader_settings.audio_providers = $downloader_settings.audio_providers.filter(item => item !== '{{ provider }}') }" />
+                    <span class="text-sm opacity-70">{{ provider }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Lyrics Providers -->
+        <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+            <h4 class="text-sm font-semibold text-white/70 mb-3 uppercase tracking-wider">Lyrics Providers</h4>
+            <div class="flex flex-col gap-2">
+                {% for provider in LYRICS_PROVIDERS %}
+                <label class="flex items-center gap-3 cursor-pointer px-2 py-1.5 rounded-lg hover:bg-white/[0.03] transition-smooth">
+                    <input type="checkbox" {% if provider in downloader_settings.lyrics_providers %} checked="checked" {% endif %}
+                        class="checkbox checkbox-sm" style="border-color: rgba(255,255,255,0.2);"
+                        id="{{ provider }}" name="{{ provider }}"
+                        data-on-change="if (evt.target.checked) { $downloader_settings.lyrics_providers.push('{{ provider }}') } else { $downloader_settings.lyrics_providers = $downloader_settings.lyrics_providers.filter(item => item !== '{{ provider }}') }" />
+                    <span class="text-sm opacity-70">{{ provider }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Output Format -->
+        <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);">
+            <h4 class="text-sm font-semibold text-white/70 mb-3 uppercase tracking-wider">Output Format</h4>
+            <select class="select w-full bg-transparent text-white text-sm"
+                style="border: 1px solid rgba(255,255,255,0.15);"
                 data-on-change="$downloader_settings.format = evt.target.options[evt.target.selectedIndex].value">
                 {% for format in FORMATS %}
-                <option value="{{ format }}" {% if format == downloader_settings.format %}selected{% endif %}>
+                <option value="{{ format }}" {% if format == downloader_settings.format %}selected{% endif %}
+                    style="background: #1a1a2e;">
                     {{ format }}
                 </option>
                 {% endfor %}
             </select>
-        </fieldset>
+        </div>
     </div>
-    <!-- Saved Changes alerts -->
-    <div id="settings-status">
-    </div>
-    <div class="modal-action">
+
+    <!-- Status Messages -->
+    <div id="settings-status" class="mt-4"></div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-2 mt-6">
         <form method="dialog">
-            <button class="btn" data-on-click="@get('/client/settings')">Cancel</button>
+            <button class="btn btn-sm btn-ghost opacity-50 hover:opacity-100" data-on-click="@get('/client/settings')">
+                Cancel
+            </button>
         </form>
-        <button class="btn btn-primary" data-on-click="@post('/client/settings')">Save</button>
+        <button class="btn btn-sm border-0 text-black font-semibold hover:brightness-110"
+            style="background: #1ed760;"
+            data-on-click="@post('/client/settings')">
+            Save Changes
+        </button>
     </div>
 </div>

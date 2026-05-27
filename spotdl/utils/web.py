@@ -89,6 +89,13 @@ class Client:
         - client_id: The client's ID.
         """
 
+        self.client_id = client_id
+        self._initialized = False
+
+        # Register immediately so concurrent requests find this client
+        # even before slow initialization completes
+        app_state.clients[self.client_id] = self
+
         self.downloader_settings = DownloaderOptions(
             **create_settings_type(
                 Namespace(config=False),
@@ -97,7 +104,6 @@ class Client:
             )  # type: ignore
         )
 
-        self.client_id = client_id
         self.downloader = Downloader(
             settings=self.downloader_settings, loop=app_state.loop
         )
@@ -109,6 +115,7 @@ class Client:
         )
 
         self.disconnect_timer = None
+        self._initialized = True
 
     async def connect(self):
         """

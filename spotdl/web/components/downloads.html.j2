@@ -2,8 +2,14 @@
 
 {% block content %}
 
-<div class="min-h-screen">
-    <div id="download-list" data-on-load="@get('/client/downloads')"></div>
+<div class="min-h-screen px-4 py-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center gap-3 mb-6 fade-in-up">
+            <iconify-icon icon="clarity:download-cloud-line" style="font-size: 28px" class="text-spotify"></iconify-icon>
+            <h1 class="text-2xl font-bold text-white">Downloads</h1>
+        </div>
+        <div id="download-list" data-on-load="@get('/client/downloads')"></div>
+    </div>
 </div>
 
 {% endblock content %}

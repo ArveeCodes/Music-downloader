@@ -3,37 +3,73 @@
 {% block content %}
 
 <span id="component-home">
-    <div class="hero min-h-[80vh]">
-        <div class="block text-center justify-center hero-content">
-            <div class="flex items-center justify-center">
-                <img src="/assets/spotdl.svg" class="mb-5 w-32 center" />
-            </div>
-            <div>
-                <h1 class="mb-5 text-5xl font-bold text-base-content">spotDL</h1>
-                <p class="mb-5 text-base-content">
-                    Download your Spotify songs with embedded album art and metadata
-                </p>
+    <div class="flex items-center justify-center min-h-[85vh] px-4">
+        <div class="text-center max-w-2xl mx-auto fade-in-up">
+
+            <!-- Logo with glow -->
+            <div class="flex items-center justify-center mb-8">
+                <div class="relative">
+                    <div class="absolute inset-0 blur-3xl opacity-20 rounded-full" style="background: #1ed760;"></div>
+                    <img src="/assets/spotdl.svg" class="relative w-24 sm:w-32" alt="spotDL" />
+                </div>
             </div>
 
-            <div class="w-full max-w-xl" data-signals="{home_search: ''}">
-                <div class="join w-full">
-                    <input type="text" placeholder="Paste a Spotify URL or search for a song..."
-                        class="input input-bordered join-item w-full"
-                        data-bind="home_search"
-                        data-on-keydown="if (evt.key === 'Enter' && $home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))" />
-                    <button class="btn btn-primary join-item"
-                        data-on-click="if ($home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))">
-                        <iconify-icon icon="clarity:search-line" style="font-size: 20px"></iconify-icon>
-                        Search
-                    </button>
+            <!-- Title -->
+            <h1 class="text-4xl sm:text-6xl font-black tracking-tight mb-4">
+                <span class="text-spotify">spot</span><span class="text-white">DL</span>
+            </h1>
+            <p class="text-base sm:text-lg opacity-60 mb-10 max-w-md mx-auto leading-relaxed">
+                Download your Spotify playlists and songs with full metadata and album art
+            </p>
+
+            <!-- Search Bar -->
+            <div class="w-full max-w-xl mx-auto" data-signals="{home_search: ''}">
+                <div class="relative group">
+                    <div class="absolute -inset-0.5 rounded-2xl opacity-0 group-hover:opacity-100 transition-smooth blur"
+                        style="background: linear-gradient(90deg, #1ed760, #1db954);"></div>
+                    <div class="relative flex items-center rounded-2xl overflow-hidden"
+                        style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);">
+                        <div class="pl-5 opacity-40">
+                            <iconify-icon icon="clarity:search-line" style="font-size: 20px"></iconify-icon>
+                        </div>
+                        <input type="text"
+                            placeholder="Paste a Spotify URL or search for a song..."
+                            class="w-full bg-transparent border-0 px-4 py-4 text-white placeholder-gray-500 focus:outline-none text-base"
+                            data-bind="home_search"
+                            data-on-keydown="if (evt.key === 'Enter' && $home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))" />
+                        <button class="px-6 py-4 font-semibold text-black transition-smooth hover:brightness-110 shrink-0"
+                            style="background: #1ed760;"
+                            data-on-click="if ($home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))">
+                            Search
+                        </button>
+                    </div>
                 </div>
-                <div class="flex flex-wrap justify-center gap-2 mt-4">
-                    <span class="badge badge-outline badge-lg">Songs</span>
-                    <span class="badge badge-outline badge-lg">Albums</span>
-                    <span class="badge badge-outline badge-lg">Playlists</span>
-                    <span class="badge badge-outline badge-lg">Artists</span>
+
+                <!-- Quick tags -->
+                <div class="flex flex-wrap justify-center gap-2 mt-6">
+                    <span class="px-3 py-1 rounded-full text-xs font-medium opacity-40 transition-smooth hover:opacity-70"
+                        style="border: 1px solid rgba(255,255,255,0.15);">
+                        <iconify-icon icon="clarity:music-note-line" style="font-size: 12px" class="mr-1"></iconify-icon>
+                        Songs
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium opacity-40 transition-smooth hover:opacity-70"
+                        style="border: 1px solid rgba(255,255,255,0.15);">
+                        <iconify-icon icon="clarity:cd-dvd-line" style="font-size: 12px" class="mr-1"></iconify-icon>
+                        Albums
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium opacity-40 transition-smooth hover:opacity-70"
+                        style="border: 1px solid rgba(255,255,255,0.15);">
+                        <iconify-icon icon="clarity:list-line" style="font-size: 12px" class="mr-1"></iconify-icon>
+                        Playlists
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium opacity-40 transition-smooth hover:opacity-70"
+                        style="border: 1px solid rgba(255,255,255,0.15);">
+                        <iconify-icon icon="clarity:users-line" style="font-size: 12px" class="mr-1"></iconify-icon>
+                        Artists
+                    </span>
                 </div>
             </div>
+
         </div>
     </div>
 </span>

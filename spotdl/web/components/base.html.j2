@@ -2,7 +2,7 @@
 <html lang="en" data-theme="forest">
 
 <head>
-    <title>spotdl</title>
+    <title>spotDL</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -23,12 +23,71 @@
 <style>
     html, body {
         min-height: 100vh;
+        overflow-x: hidden;
     }
     iconify-icon {
         display: inline-block;
         width: 1em;
         height: 1em;
     }
+    /* Animated gradient background */
+    .gradient-bg {
+        background: linear-gradient(135deg, #0a0a0a 0%, #111827 30%, #0f172a 60%, #1e1b4b 100%);
+        background-size: 300% 300%;
+        animation: gradientShift 20s ease infinite;
+    }
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    /* Glow effects */
+    .glow-green {
+        box-shadow: 0 0 25px rgba(30, 215, 96, 0.15), 0 0 50px rgba(30, 215, 96, 0.05);
+    }
+    .glow-green-lg {
+        box-shadow: 0 0 40px rgba(30, 215, 96, 0.2), 0 0 80px rgba(30, 215, 96, 0.08);
+    }
+    /* Glass card */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    /* Smooth transitions */
+    .transition-smooth {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    /* Fade in animation */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+    /* Stagger children */
+    .stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+    .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+    .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+    .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+    .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+    .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+    /* Spotify green accent */
+    .text-spotify { color: #1ed760; }
+    .bg-spotify { background-color: #1ed760; }
+    .border-spotify { border-color: #1ed760; }
+    /* Progress bar custom */
+    .progress-spotify::-webkit-progress-value { background: linear-gradient(90deg, #1ed760, #1db954); border-radius: 999px; }
+    .progress-spotify::-moz-progress-bar { background: linear-gradient(90deg, #1ed760, #1db954); border-radius: 999px; }
 </style>
 
 <script>
@@ -50,7 +109,7 @@
 <body data-signals="{'client_id': ''}"
     data-on-load="$client_id = storageGet('client_id') || ''; @get('/client/load')">
 
-    <div class="bg-base-300 min-h-screen flex flex-col">
+    <div class="gradient-bg min-h-screen flex flex-col">
         {% include "navbar.html.j2" %}
 
         <!-- Content -->
@@ -63,15 +122,14 @@
         {% include "footer.html.j2" %}
 
         <!-- Toast container -->
-        <div id="toast-container" class="toast toast-end toast-bottom"></div>
+        <div id="toast-container" class="toast toast-end toast-bottom z-50"></div>
 
         <!-- Settings -->
         <span id="component-settings"
             data-on-signal-patch="@get('/client/component/settings-content'); storageSet('client_id', $client_id);"
             data-on-signal-patch-filter="{include: /client_id/}">
         </span>
-        <dialog id="settings_modal" class="modal">
-            <!-- Settings Modal Content -->
+        <dialog id="settings_modal" class="modal modal-bottom sm:modal-middle">
             <div id="component-settings-content"></div>
             <form method="dialog" class="modal-backdrop">
                 <button>close</button>

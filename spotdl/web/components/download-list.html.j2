@@ -1,58 +1,82 @@
 <div id="download-list">
-    <div class="m-2">
-        <h1 class="m-4 text-xl">Queue</h1>
-        {% if client_song_downloads|length == 0 %}
-        <div class="alert alert-info shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                class="stroke-current flex-shrink-0 w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span>No downloads are queued.</span>
-            <button class="btn btn-sm btn-primary" data-on-click="goto('/')">Search</button>
+    {% if client_song_downloads|length == 0 %}
+    <!-- Empty State -->
+    <div class="flex flex-col items-center justify-center py-20 fade-in-up">
+        <div class="relative mb-6">
+            <div class="absolute inset-0 blur-2xl opacity-10 rounded-full" style="background: #1ed760;"></div>
+            <iconify-icon icon="clarity:download-cloud-line" style="font-size: 64px" class="relative opacity-20"></iconify-icon>
         </div>
-        {% else %}
-        <div class="card card-bordered my-2 shadow-lg card-compact bg-base-100">
-            {% for client_song_download in client_song_downloads %}
-            <div key="{{ loop.index }}" class="card-body flex flex-row items-center gap-4">
-                <div class="avatar">
-                    <div class="w-14 h-14 rounded">
-                        <img src="{{ client_song_download.song.cover_url }}" loading="lazy" />
-                    </div>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <h2 class="card-title text-sm sm:text-base truncate">
-                        {{ client_song_download.song.name }}
-                    </h2>
-                    <p class="text-xs sm:text-sm opacity-70 truncate">
-                        {{ client_song_download.song.artist }} &mdash; {{ client_song_download.song.album_name }}
-                    </p>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                    {% if client_song_download.message == "Error" %}
-                    <span class="badge badge-error hidden sm:inline-flex">Error</span>
-                    {% elif client_song_download.progress == 100 %}
-                    <span class="badge badge-success hidden sm:inline-flex">Done</span>
-                    <a class="btn btn-sm btn-square btn-ghost" data-attr="{href:'/api/download/file?file={{ client_song_download.path|urlencode|replace('/', '%2f') }}&client_id=' + $client_id}" download>
-                        <iconify-icon icon="clarity:download-line" style="font-size: 20px"></iconify-icon>
-                    </a>
-                    {% elif client_song_download.progress == 0 %}
-                    <span class="badge badge-info hidden sm:inline-flex">{{ client_song_download.message }}</span>
-                    <span class="loading loading-spinner loading-sm text-primary"></span>
-                    {% else %}
-                    <span class="badge badge-warning hidden sm:inline-flex">{{ client_song_download.message }}</span>
-                    <div class="flex items-center gap-2">
-                        <progress class="progress progress-primary w-20 sm:w-40" value="{{ client_song_download.progress }}" max="100"></progress>
-                        <span class="text-xs font-mono">{{ client_song_download.progress }}%</span>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% if not loop.last %}
-            <div class="divider my-0 mx-4"></div>
-            {% endif %}
-            {% endfor %}
-        </div>
-        {% endif %}
+        <p class="text-lg font-medium opacity-40 mb-2">No downloads yet</p>
+        <p class="text-sm opacity-25 mb-6">Search for a song or paste a Spotify link to get started</p>
+        <button class="btn btn-sm border-0 text-black font-semibold hover:brightness-110 transition-smooth"
+            style="background: #1ed760;"
+            data-on-click="goto('/')">
+            <iconify-icon icon="clarity:search-line" style="font-size: 14px" class="mr-1"></iconify-icon>
+            Search Music
+        </button>
     </div>
+    {% else %}
+    <!-- Download Queue -->
+    <div class="glass-card rounded-xl overflow-hidden stagger-children">
+        {% for client_song_download in client_song_downloads %}
+        <div key="{{ loop.index }}" class="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 transition-smooth hover:bg-white/[0.02] fade-in-up" style="opacity: 0;">
+            <!-- Album Art -->
+            <div class="shrink-0 relative">
+                <img src="{{ client_song_download.song.cover_url }}"
+                    class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover shadow-lg"
+                    loading="lazy" />
+                {% if client_song_download.progress > 0 and client_song_download.progress < 100 %}
+                <div class="absolute inset-0 flex items-center justify-center rounded-lg" style="background: rgba(0,0,0,0.5);">
+                    <span class="text-xs font-bold text-white">{{ client_song_download.progress }}%</span>
+                </div>
+                {% elif client_song_download.progress == 100 %}
+                <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style="background: #1ed760;">
+                    <iconify-icon icon="clarity:check-line" style="font-size: 12px" class="text-black"></iconify-icon>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Song Info -->
+            <div class="flex-1 min-w-0">
+                <h3 class="font-medium text-sm sm:text-base text-white truncate">
+                    {{ client_song_download.song.name }}
+                </h3>
+                <p class="text-xs opacity-40 truncate mt-0.5">
+                    {{ client_song_download.song.artist }} &mdash; {{ client_song_download.song.album_name }}
+                </p>
+                {% if client_song_download.progress > 0 and client_song_download.progress < 100 %}
+                <div class="mt-2">
+                    <progress class="progress progress-spotify w-full h-1"
+                        value="{{ client_song_download.progress }}" max="100"
+                        style="background: rgba(255,255,255,0.06);"></progress>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Status -->
+            <div class="flex items-center gap-2 shrink-0">
+                {% if client_song_download.message == "Error" %}
+                <span class="px-2 py-1 rounded-md text-xs font-medium" style="background: rgba(239,68,68,0.15); color: #f87171;">
+                    Failed
+                </span>
+                {% elif client_song_download.progress == 100 %}
+                <a class="btn btn-circle btn-sm border-0 text-black transition-smooth hover:brightness-110"
+                    style="background: #1ed760;"
+                    data-attr="{href:'/api/download/file?file={{ client_song_download.path|urlencode|replace('/', '%2f') }}&client_id=' + $client_id}" download>
+                    <iconify-icon icon="clarity:download-line" style="font-size: 16px"></iconify-icon>
+                </a>
+                {% elif client_song_download.progress == 0 %}
+                <span class="loading loading-spinner loading-sm" style="color: #1ed760;"></span>
+                <span class="text-xs opacity-30 hidden sm:inline">{{ client_song_download.message }}</span>
+                {% else %}
+                <span class="text-xs font-mono opacity-50">{{ client_song_download.progress }}%</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if not loop.last %}
+        <div class="mx-4" style="border-bottom: 1px solid rgba(255,255,255,0.04);"></div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
 </div>

@@ -1,46 +1,56 @@
-<div id="search-list" data-signals="{'song_url': {}}">
+<div id="search-list" data-signals="{'song_url': {}}" class="max-w-4xl mx-auto px-2 sm:px-4 py-4 stagger-children">
     {% for song in songs %}
-    <div key="{{loop.index0}}" class="card md:card-side card-bordered m-2 shadow-lg card-compact bg-base-100">
-        <figure class="aspect-square md:max-h-fit">
-            <img src="{{ song.cover_url }}" class="object-contain aspect-square md:max-h-44" loading="lazy" />
-        </figure>
-        <div class="card-body">
-            <h2 class="card-title">
-                {{ song.name }}
-                {% if song.explicit %}
-                <div class="badge mx-0.5 badge-error">
-                    Explicit
-                </div>
-                {% endif %}
-            </h2>
-            <h3>
-                {% for artist in song.artists %}
-                {% if not loop.first %}
-                &#8226;
-                {% endif %}
-                {{ artist }}
-                {% endfor %}
-            </h3>
-            <h3>
-                {{ song.album_name }}
-            </h3>
-            <div class="card-actions absolute bottom-0 right-0 m-2">
-                <a class="btn btn-ghost btn-square" href="{{ song.url }}" target="_blank" rel="noopener noreferrer">
-                    <iconify-icon icon="clarity:link-line" style="font-size: 24px"></iconify-icon>
-                </a>
+    <div key="{{loop.index0}}"
+        class="glass-card rounded-xl mb-3 transition-smooth hover:scale-[1.01] fade-in-up"
+        style="opacity: 0;">
+        <div class="flex items-center gap-4 p-3 sm:p-4">
+            <!-- Album Art -->
+            <div class="shrink-0">
+                <img src="{{ song.cover_url }}"
+                    class="w-14 h-14 sm:w-16 sm:h-16 rounded-lg object-cover shadow-lg"
+                    loading="lazy"
+                    alt="{{ song.name }}" />
+            </div>
 
-                {% if false %}
-                <button class="btn btn-primary btn-square">
-                    <iconify-icon icon="clarity:check-line" style="font-size: 24px"></iconify-icon>
+            <!-- Song Info -->
+            <div class="flex-1 min-w-0">
+                <h2 class="font-semibold text-sm sm:text-base text-white truncate">
+                    {{ song.name }}
+                    {% if song.explicit %}
+                    <span class="inline-flex items-center justify-center w-4 h-4 rounded text-[9px] font-bold ml-1 align-middle"
+                        style="background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.7);">E</span>
+                    {% endif %}
+                </h2>
+                <p class="text-xs sm:text-sm opacity-50 truncate mt-0.5">
+                    {% for artist in song.artists %}{% if not loop.first %}, {% endif %}{{ artist }}{% endfor %}
+                </p>
+                <p class="text-xs opacity-30 truncate mt-0.5 hidden sm:block">
+                    {{ song.album_name }}
+                </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2 shrink-0">
+                <a class="btn btn-ghost btn-circle btn-sm opacity-40 hover:opacity-100 transition-smooth"
+                    href="{{ song.url }}" target="_blank" rel="noopener noreferrer">
+                    <iconify-icon icon="clarity:pop-out-line" style="font-size: 16px"></iconify-icon>
+                </a>
+                <button id="download-{{song.url}}"
+                    class="btn btn-circle btn-sm border-0 text-black transition-smooth hover:brightness-110 hover:scale-110"
+                    style="background: #1ed760;"
+                    data-on-click="$song_url = '{{song.url}}'; @post('/client/download/');">
+                    <iconify-icon icon="clarity:download-line" style="font-size: 16px"></iconify-icon>
                 </button>
-                {% else %}
-                <button id="download-{{song.url}}" class="btn btn-primary btn-square"
-                    data-on-click="$song_url = '{{song.url}}'; @post('/client/download/'); ">
-                    <iconify-icon icon="clarity:floppy-line" style="font-size: 24px"></iconify-icon>
-                </button>
-                {% endif %}
             </div>
         </div>
     </div>
     {% endfor %}
+
+    {% if not songs %}
+    <div class="flex flex-col items-center justify-center py-20 opacity-40">
+        <iconify-icon icon="clarity:search-line" style="font-size: 48px" class="mb-4"></iconify-icon>
+        <p class="text-lg">No results found</p>
+        <p class="text-sm mt-1">Try a different search term</p>
+    </div>
+    {% endif %}
 </div>

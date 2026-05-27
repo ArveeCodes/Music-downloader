@@ -4,7 +4,7 @@ Module which contains the web client routes and functions.
 
 import asyncio
 import uuid
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 from datastar_py.fastapi import ReadSignals
 from datastar_py.fastapi import ServerSentEventGenerator as SSE
@@ -85,7 +85,7 @@ async def handle_get_client_load(datastar_signals: ReadSignals):
 
     found_client = Client.get_instance(signals.client_id)
     if found_client is None:
-        # Create a new client, reusing the same ID so browser stays in sync
+        # Create a new client (registers itself in app_state.clients immediately)
         app_state.logger.info(
             f"Creating new client with ID {signals.client_id}..."
         )
@@ -96,18 +96,26 @@ async def handle_get_client_load(datastar_signals: ReadSignals):
         client = found_client
     await client.connect()
 
-    # Send the client ID and status to the browser
-    yield SSE.patch_elements("""<div id="status"></div>""")
+    # Send the client ID and connected status to the browser
+    yield SSE.patch_elements("""<div id="status" class="btn btn-ghost btn-circle btn-sm opacity-80">
+        <iconify-icon icon="clarity:check-circle-line" style="font-size: 20px; color: #1ed760;"></iconify-icon>
+    </div>""")
     yield SSE.patch_signals(
         {
             "client_id": client.client_id,
         }
     )
     try:
+        # Wait for client to fully initialize (Downloader, ProgressHandler, etc.)
+        while not getattr(client, '_initialized', False):
+            await asyncio.sleep(0.5)
         while True:
-            yield SSE.patch_elements(f"""<div id="overall-completed-tasks">
-                {len(client.downloader.progress_handler.progress_tracker.songs)}
-                </div>""")
+            song_count = len(
+                client.downloader.progress_handler.progress_tracker.songs
+            )
+            yield SSE.patch_elements(
+                f"""<div id="overall-completed-tasks">{song_count}</div>"""
+            )
             await asyncio.sleep(3)
     finally:
         app_state.logger.info(f"[{signals.client_id}] Unloading client...")
@@ -126,14 +134,14 @@ async def handle_get_client_search(datastar_signals: ReadSignals):
     is_valid_url = validate_search_term(signals.search_term)
 
     if is_valid_url:
-        # redirect client to downloads page
+        # redirect client to downloads page and start download in background
         app_state.logger.info(
             f"[{signals.client_id}] Valid URL detected, redirecting to downloads..."
         )
-        yield SSE.redirect("/downloads")
         signals.song_url = signals.search_term
-        async for update in gen_download(signals):
-            yield update
+        # Fire-and-forget the download so it continues even after SSE closes
+        asyncio.create_task(background_download(signals))
+        yield SSE.redirect("/downloads")
         return
 
     songs = await asyncio.get_event_loop().run_in_executor(
@@ -288,14 +296,22 @@ async def handle_post_client_download(datastar_signals: ReadSignals):
 # HELPERS
 
 
-async def wait_for_client(client_id: str, timeout: float = 15.0) -> Optional[Client]:
+async def wait_for_client(
+    client_id: str, timeout: float = 15.0, wait_init: bool = True
+) -> Optional[Client]:
     """
-    Wait for a client to become available, with a timeout.
+    Wait for a client to become available and fully initialized, with a timeout.
     Handles the race condition where /client/load is still creating the client
     when other SSE endpoints fire.
     """
     client = Client.get_instance(client_id)
     if client is not None:
+        if wait_init:
+            # Wait for full initialization (downloader, progress_handler, etc.)
+            elapsed = 0.0
+            while not getattr(client, '_initialized', False) and elapsed < timeout:
+                await asyncio.sleep(0.3)
+                elapsed += 0.3
         return client
 
     # Client is being created by /client/load in another request, wait briefly
@@ -306,9 +322,55 @@ async def wait_for_client(client_id: str, timeout: float = 15.0) -> Optional[Cli
         elapsed += interval
         client = Client.get_instance(client_id)
         if client is not None:
+            if wait_init:
+                while not getattr(client, '_initialized', False) and elapsed < timeout:
+                    await asyncio.sleep(0.3)
+                    elapsed += 0.3
             return client
 
     return None
+
+
+async def background_download(signals: Signals):
+    """
+    Run a download in the background (fire-and-forget).
+    Used when search detects a valid URL and redirects to downloads page.
+    The download runs independently of any SSE stream.
+    """
+    client = await wait_for_client(signals.client_id)
+    if client is None:
+        app_state.logger.warning(
+            f"[{signals.client_id}] Client not found for background download."
+        )
+        return
+
+    app_state.logger.info(
+        f"[{signals.client_id}] Background download started: {signals.song_url}"
+    )
+
+    if app_state.web_settings.get("web_use_output_dir", False):
+        client.downloader.settings["output"] = client.downloader_settings["output"]
+    else:
+        client.downloader.settings["output"] = str(
+            (get_spotdl_path() / f"web/sessions/{client.client_id}").absolute()
+        )
+
+    try:
+        song = Song.from_url(signals.song_url)
+        app_state.logger.info(f"[{signals.client_id}] Downloading: {song}")
+        _, path = await client.downloader.pool_download(song)
+        if path is None:
+            app_state.logger.error(
+                f"[{signals.client_id}] Failed to download {song.name}"
+            )
+        else:
+            app_state.logger.info(
+                f"[{signals.client_id}] Download complete: {path}"
+            )
+    except Exception as exception:
+        app_state.logger.error(
+            f"[{signals.client_id}] Background download error: {exception}"
+        )
 
 
 async def gen_download(signals: Signals):
@@ -328,8 +390,10 @@ async def gen_download(signals: Signals):
         f"[{signals.client_id}] Download requested: {signals.song_url}"
     )
     yield SSE.patch_elements(f"""
-            <button id="download-{signals.song_url}" class="btn btn-primary btn-square loading">
-                </button>
+            <button id="download-{signals.song_url}" class="btn btn-circle btn-sm border-0"
+                style="background: rgba(30,215,96,0.2);">
+                <span class="loading loading-spinner loading-xs" style="color: #1ed760;"></span>
+            </button>
         """)
 
     if app_state.web_settings.get("web_use_output_dir", False):
@@ -347,9 +411,10 @@ async def gen_download(signals: Signals):
         # Download Song
         _, path = await client.downloader.pool_download(song)
         yield SSE.patch_elements(f"""
-            <button id="download-{signals.song_url}" class="btn btn-primary btn-square">
-                    <iconify-icon icon="clarity:check-line" style="font-size: 24px"></iconify-icon>
-                </button>
+            <button id="download-{signals.song_url}" class="btn btn-circle btn-sm border-0 text-black"
+                style="background: #1ed760;">
+                <iconify-icon icon="clarity:check-line" style="font-size: 16px"></iconify-icon>
+            </button>
         """)
 
         if path is None:
