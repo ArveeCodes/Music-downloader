@@ -78,7 +78,7 @@ class Album(SongList):
                 continue
 
             release_date = album_metadata["release_date"]
-            artists = artists = [artist["name"] for artist in track["artists"]]
+            artists = [artist["name"] for artist in track["artists"]]
 
             song = Song.from_missing_data(
                 name=track["name"],

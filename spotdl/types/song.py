@@ -3,6 +3,7 @@ Song module that hold the Song and SongList classes.
 """
 
 import json
+import logging
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -11,6 +12,9 @@ from rapidfuzz import fuzz
 from spotdl.utils.spotify import SpotifyClient
 
 __all__ = ["Song", "SongList", "SongError"]
+
+
+logger = logging.getLogger(__name__)
 
 
 class SongError(Exception):
@@ -61,6 +65,49 @@ class Song:
     list_length: Optional[int] = None
     artist_id: Optional[str] = None
     album_type: Optional[str] = None
+
+    @classmethod
+    def from_search_result(cls, item: Dict[str, Any]) -> "Song":
+        album = item.get("album", {})
+
+        images = album.get("images", [])
+        if not images:
+            sources = album.get("coverArt", {}).get("sources", [])
+            images = [{"url": s["url"], "width": s.get("width", 0), "height": s.get("height", 0)} for s in sources]
+
+        cover_url = None
+        if images:
+            cover_url = max(images, key=lambda i: i.get("width", 0) * i.get("height", 0))["url"]
+
+        release_date = album.get("release_date") or "0001"
+        copyrights = album.get("copyrights", [])
+
+        return cls(
+            name=item["name"],
+            artists=[a["name"] for a in item.get("artists", [])],
+            artist=item["artists"][0]["name"] if item.get("artists") else "",
+            artist_id=item["artists"][0]["id"] if item.get("artists") else None,
+            album_id=album.get("id"),
+            album_name=album.get("name", ""),
+            album_artist=album.get("artists", [{}])[0].get("name", "") if album.get("artists") else "",
+            album_type=album.get("album_type"),
+            copyright_text=copyrights[0]["text"] if copyrights else None,
+            genres=album.get("genres", []),
+            disc_number=item.get("disc_number", 1),
+            disc_count=1,
+            duration=int(item.get("duration_ms", 0) / 1000),
+            year=int(release_date[:4]) if len(release_date) >= 4 and release_date[:4].isdigit() else 0,
+            date=release_date,
+            track_number=item.get("track_number", 1),
+            tracks_count=album.get("total_tracks", 1),
+            isrc=item.get("external_ids", {}).get("isrc"),
+            song_id=item["id"],
+            explicit=item.get("explicit", False),
+            publisher=album.get("label", ""),
+            url=item.get("external_urls", {}).get("spotify", f"https://open.spotify.com/track/{item['id']}"),
+            popularity=item.get("popularity"),
+            cover_url=cover_url,
+        )
 
     @classmethod
     def from_url(cls, url: str) -> "Song":
@@ -192,14 +239,14 @@ class Song:
 
         raw_search_results = Song.search(search_term)
 
+        items = raw_search_results.get("tracks", {}).get("items", [])[:10]
+
         songs = []
-        for idx, _ in enumerate(raw_search_results.get("tracks", []).get("items", [])):
-            songs.append(
-                Song.from_url(
-                    "http://open.spotify.com/track/"
-                    + raw_search_results["tracks"]["items"][idx]["id"]
-                )
-            )
+        for item in items:
+            try:
+                songs.append(Song.from_search_result(item))
+            except Exception as exc:
+                logger.debug("Failed to parse search result %s: %s", item.get("id"), exc)
 
         return songs
 

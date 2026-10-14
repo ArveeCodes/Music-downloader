@@ -69,6 +69,7 @@ JAP_REGEX = re.compile(
 )
 
 DISALLOWED_REGEX = re.compile(r"[^-a-zA-Z0-9\!\@\$]+")
+MULTI_SPACE_REGEX = re.compile(r"\s{2,}")
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,7 @@ def sanitize_string(string: str) -> str:
     output = "".join(char for char in output if char not in "/?\\*|<>")
 
     # clean up repeated spaces caused by the removal of these chars
-    output = re.sub(r"\s{2,}", " ", output)
+    output = MULTI_SPACE_REGEX.sub(" ", output)
 
     # double quotes (") and semi-colons (:) are also disallowed characters but we would
     # like to retain their equivalents, so they aren't removed in the prior loop
@@ -317,7 +318,7 @@ def create_file_name(
     - the formatted string as a Path object
     """
 
-    temp_song = copy.deepcopy(song)
+    temp_song = copy.copy(song)
 
     # If template does not contain any of the keys,
     # append {artists} - {title}.{output-ext} to it

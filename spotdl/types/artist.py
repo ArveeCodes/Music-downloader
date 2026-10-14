@@ -95,7 +95,7 @@ class Artist(SongList):
         songs_names = set()
         for song in songs:
             slug_name = slugify(song.name)
-            if song.name not in songs_names:
+            if slug_name not in songs_names:
                 songs_list.append(song)
                 songs_names.add(slug_name)
 

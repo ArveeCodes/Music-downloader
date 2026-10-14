@@ -1,37 +1,52 @@
-<div class="modal-box relative" id="component-settings-content">
+<div class="modal-box relative bg-base-100 max-w-md" id="component-settings-content">
     <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            data-on-click="@get('/client/settings')">&#x2715;</button>
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-3 top-3"
+            data-on-click="@get('/client/settings')">
+            <iconify-icon icon="clarity:close-line" style="font-size: 18px"></iconify-icon>
+        </button>
     </form>
-    <h3 class="font-bold text-lg">Download Settings</h3>
-    <div class="flex flex-col justify-center my-4 gap-4">
-        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 w-full">
-            <legend class="fieldset-legend">Audio Providers</legend>
-            {% for provider in AUDIO_PROVIDERS %}
-            <label class="label cursor-pointer">
-                <input type="checkbox" {% if provider in downloader_settings.audio_providers %} checked="checked" {%
-                    endif %} class="checkbox" id="{{ provider }}" name="{{ provider }}"
-                    data-on-change="if (evt.target.checked) { $downloader_settings.audio_providers.push('{{ provider }}') } else { $downloader_settings.audio_providers = $downloader_settings.audio_providers.filter(item => item !== '{{ provider }}') }" />
-                {{ provider }}
-            </label>
-            {% endfor %}
+
+    <h3 class="font-bold text-lg mb-1">Settings</h3>
+    <p class="text-sm text-base-content/50 mb-4">Configure download preferences</p>
+
+    <div class="space-y-4">
+        <fieldset class="fieldset bg-base-200/50 rounded-xl border border-base-content/5 p-4">
+            <legend class="fieldset-legend text-xs font-semibold uppercase tracking-wider text-base-content/40 px-2">
+                Audio providers
+            </legend>
+            <div class="space-y-1">
+                {% for provider in AUDIO_PROVIDERS %}
+                <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-200/50 cursor-pointer transition-colors">
+                    <input type="checkbox" {% if provider in downloader_settings.audio_providers %}checked{% endif %}
+                        class="checkbox checkbox-sm checkbox-primary"
+                        data-on-change="if (evt.target.checked) { $downloader_settings.audio_providers.push('{{ provider }}') } else { $downloader_settings.audio_providers = $downloader_settings.audio_providers.filter(item => item !== '{{ provider }}') }" />
+                    <span class="text-sm">{{ provider }}</span>
+                </label>
+                {% endfor %}
+            </div>
         </fieldset>
 
-        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 w-full">
-            <legend class="fieldset-legend">Lyrics Providers</legend>
-            {% for provider in LYRICS_PROVIDERS %}
-            <label class="label cursor-pointer">
-                <input type="checkbox" {% if provider in downloader_settings.lyrics_providers %} checked="checked" {%
-                    endif %} class="checkbox" id="{{ provider }}" name="{{ provider }}"
-                    data-on-change="if (evt.target.checked) { $downloader_settings.lyrics_providers.push('{{ provider }}') } else { $downloader_settings.lyrics_providers = $downloader_settings.lyrics_providers.filter(item => item !== '{{ provider }}') }" />
-                {{ provider }}
-            </label>
-            {% endfor %}
+        <fieldset class="fieldset bg-base-200/50 rounded-xl border border-base-content/5 p-4">
+            <legend class="fieldset-legend text-xs font-semibold uppercase tracking-wider text-base-content/40 px-2">
+                Lyrics providers
+            </legend>
+            <div class="space-y-1">
+                {% for provider in LYRICS_PROVIDERS %}
+                <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-200/50 cursor-pointer transition-colors">
+                    <input type="checkbox" {% if provider in downloader_settings.lyrics_providers %}checked{% endif %}
+                        class="checkbox checkbox-sm checkbox-primary"
+                        data-on-change="if (evt.target.checked) { $downloader_settings.lyrics_providers.push('{{ provider }}') } else { $downloader_settings.lyrics_providers = $downloader_settings.lyrics_providers.filter(item => item !== '{{ provider }}') }" />
+                    <span class="text-sm">{{ provider }}</span>
+                </label>
+                {% endfor %}
+            </div>
         </fieldset>
 
-        <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 w-full">
-            <legend class="fieldset-legend">Output Format</legend>
-            <select class="select w-full"
+        <fieldset class="fieldset bg-base-200/50 rounded-xl border border-base-content/5 p-4">
+            <legend class="fieldset-legend text-xs font-semibold uppercase tracking-wider text-base-content/40 px-2">
+                Output format
+            </legend>
+            <select class="select select-sm w-full bg-base-100 border-base-content/10"
                 data-on-change="$downloader_settings.format = evt.target.options[evt.target.selectedIndex].value">
                 {% for format in FORMATS %}
                 <option value="{{ format }}" {% if format == downloader_settings.format %}selected{% endif %}>
@@ -42,12 +57,15 @@
         </fieldset>
     </div>
 
-    <div id="settings-status"></div>
+    <div id="settings-status" class="mt-3"></div>
 
-    <div class="modal-action">
+    <div class="modal-action gap-2">
         <form method="dialog">
-            <button class="btn" data-on-click="@get('/client/settings')">Cancel</button>
+            <button class="btn btn-ghost btn-sm" data-on-click="@get('/client/settings')">Cancel</button>
         </form>
-        <button class="btn btn-primary" data-on-click="@post('/client/settings')">Save</button>
+        <button class="btn btn-primary btn-sm gap-1" data-on-click="@post('/client/settings')">
+            <iconify-icon icon="clarity:check-line" style="font-size: 16px"></iconify-icon>
+            Save
+        </button>
     </div>
 </div>

@@ -3,7 +3,7 @@ Module for handling API requests.
 """
 
 import argparse
-import os
+import asyncio
 import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -54,7 +54,7 @@ async def connect_endpoint(client_id: str):
 
 
 @router.get("/api/url", response_model=None)
-def songs_from_url(url: str) -> List[Song]:
+async def songs_from_url(url: str) -> List[Song]:
     """
     Search for a song, playlist, artist or album on spotify using url.
 
@@ -65,17 +65,19 @@ def songs_from_url(url: str) -> List[Song]:
     - returns a list with Song objects to be downloaded.
     """
 
-    if "playlist" in url:
-        playlist = Playlist.from_url(url)
-        return list(map(Song.from_url, playlist.urls))
-    if "album" in url:
-        album = Album.from_url(url)
-        return list(map(Song.from_url, album.urls))
-    if "artist" in url:
-        artist = Artist.from_url(url)
-        return list(map(Song.from_url, artist.urls))
+    def _fetch():
+        if "playlist" in url:
+            playlist = Playlist.from_url(url)
+            return list(map(Song.from_url, playlist.urls))
+        if "album" in url:
+            album = Album.from_url(url)
+            return list(map(Song.from_url, album.urls))
+        if "artist" in url:
+            artist = Artist.from_url(url)
+            return list(map(Song.from_url, artist.urls))
+        return [Song.from_url(url)]
 
-    return [Song.from_url(url)]
+    return await asyncio.to_thread(_fetch)
 
 
 @router.get("/api/version", response_model=None)
@@ -109,7 +111,7 @@ async def shutdown_event():
 
 
 @router.get("/api/songs/search", response_model=None)
-def query_search(query: str) -> List[Song]:
+async def query_search(query: str) -> List[Song]:
     """
     Parse search term and return list of Song objects.
 
@@ -120,7 +122,7 @@ def query_search(query: str) -> List[Song]:
     - returns a list of Song objects.
     """
 
-    return get_search_results(query)
+    return await asyncio.to_thread(get_search_results, query)
 
 
 @router.post("/api/download/url")
@@ -147,8 +149,8 @@ async def download_url(
         )
 
     try:
-        # Fetch song metadata
-        song = Song.from_url(url)
+        # Fetch song metadata (blocking call — offload to thread)
+        song = await asyncio.to_thread(Song.from_url, url)
 
         # Download Song
         _, path = await client.downloader.pool_download(song)
@@ -187,20 +189,21 @@ async def download_file(
     - returns the file response, filename specified to return as attachment.
     """
 
-    expected_path = str((get_spotdl_path() / "web/sessions").absolute())
+    expected_path = (get_spotdl_path() / "web/sessions").resolve()
     if state.web_settings.get("web_use_output_dir", False):
-        expected_path = str(
-            Path(client.downloader_settings["output"].split("{", 1)[0]).absolute()
-        )
+        expected_path = Path(
+            client.downloader_settings["output"].split("{", 1)[0]
+        ).resolve()
 
+    file_path = Path(file).resolve()
     if (not file.endswith(client.downloader_settings["format"])) or (
-        not file.startswith(expected_path)
+        not file_path.is_relative_to(expected_path)
     ):
         raise HTTPException(status_code=400, detail="Invalid download path.")
 
     return FileResponse(
-        file,
-        filename=os.path.basename(file),
+        file_path,
+        filename=file_path.name,
     )
 
 

@@ -3,13 +3,23 @@
 {% block content %}
 
 <div data-signals='{"search_term": {{ search_term|tojson }}}'>
-    <div class="min-h-screen">
-        <span id="search-list" class="hero-content">
-            <button class="btn btn-sm btn-ghost" data-on-load="@get('/client/search')">
-                <span class="loading loading-spinner"></span>
-                Searching...
+    <div class="min-h-[calc(100vh-8rem)] p-4 max-w-5xl mx-auto">
+        <div class="flex items-center gap-3 mb-6">
+            <button class="btn btn-ghost btn-sm btn-circle" onclick="goto('/')">
+                <iconify-icon icon="clarity:arrow-line" style="font-size: 18px; transform: rotate(180deg)"></iconify-icon>
             </button>
+            <h1 class="text-xl font-bold truncate">
+                Searching for "<span class="text-primary">{{ search_term }}</span>"
+            </h1>
+        </div>
+
+        <span id="search-list" class="block">
+            <div class="flex flex-col items-center justify-center py-20 gap-4 fade-in">
+                <span class="loading loading-ring loading-lg text-primary"></span>
+                <span class="text-base-content/50">Searching Spotify...</span>
+            </div>
         </span>
+        <span data-on-load="@get('/client/search')"></span>
     </div>
 </div>
 

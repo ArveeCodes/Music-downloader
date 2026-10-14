@@ -70,7 +70,7 @@ class Saved(SongList):
             album_meta = track_meta["album"]
 
             release_date = album_meta["release_date"]
-            artists = artists = [artist["name"] for artist in track_meta["artists"]]
+            artists = [artist["name"] for artist in track_meta["artists"]]
 
             song = Song.from_missing_data(
                 name=track_meta["name"],

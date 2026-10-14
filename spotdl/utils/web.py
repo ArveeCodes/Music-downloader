@@ -6,7 +6,6 @@ FastAPI routes/classes etc.
 import asyncio
 import logging
 import mimetypes
-import threading
 from argparse import Namespace
 from typing import Any, Dict, Optional, Union
 
@@ -77,7 +76,7 @@ class Client:
     client_id: str
     downloader: Downloader
     downloader_settings: DownloaderOptions
-    disconnect_timer: Optional[threading.Timer] = None
+    disconnect_timer: Optional[asyncio.TimerHandle] = None
 
     def __init__(self, client_id: str):
         """
@@ -112,7 +111,7 @@ class Client:
         """
         Called when a new client connects.
         """
-        if self.disconnect_timer and self.disconnect_timer.is_alive():
+        if self.disconnect_timer is not None:
             self.disconnect_timer.cancel()
             self.disconnect_timer = None
         app_state.clients[self.client_id] = self
@@ -123,24 +122,21 @@ class Client:
         Called when a client disconnects from the websocket.
         """
 
-        # If the disconnect timer is running, cancel it
-        if self.disconnect_timer and self.disconnect_timer.is_alive():
+        if self.disconnect_timer is not None:
             self.disconnect_timer.cancel()
 
-        # Schedule the disconnect now
         app_state.logger.info(
             "Client %s will disconnect in 15 seconds of inactivity", self.client_id
         )
-        self.disconnect_timer = threading.Timer(15, self.disconnect_now)
-        self.disconnect_timer.start()
+        self.disconnect_timer = app_state.loop.call_later(
+            15, self._disconnect_now_sync
+        )
 
-    def disconnect_now(self):
+    def _disconnect_now_sync(self):
         """
-        Disconnect the client.
+        Disconnect the client (runs on the event loop thread).
         """
-        # Remove the connection from the list of connections
         if self.client_id in app_state.clients:
-            # app_state.clients.pop(client_id, None)
             del app_state.clients[self.client_id]
             app_state.logger.info("Client %s disconnected", self.client_id)
         else:
@@ -207,8 +203,10 @@ class ApplicationState:
     loop: asyncio.AbstractEventLoop
     web_settings: WebOptions
     downloader_settings: DownloaderOptions
-    clients: Dict[str, Client] = {}
     logger: logging.Logger
+
+    def __init__(self):
+        self.clients: Dict[str, Client] = {}
 
 
 app_state: ApplicationState = ApplicationState()

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "spotdl-web",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-m", "spotdl", "web"],
+      "port": 8800
+    }
+  ]
+}

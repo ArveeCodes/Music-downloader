@@ -9,6 +9,7 @@ import logging
 import re
 import shutil
 import sys
+import threading
 import traceback
 from argparse import Namespace
 from pathlib import Path
@@ -214,6 +215,7 @@ class Downloader:
 
         # Initialize list of errors
         self.errors: List[str] = []
+        self._download_lock = threading.Lock()
 
         # Initialize proxy server
         proxy = self.settings["proxy"]
@@ -374,7 +376,7 @@ class Downloader:
         async with self.semaphore:
             return await self.loop.run_in_executor(None, self.search_and_download, song)
 
-    def search(self, song: Song) -> str:
+    def search(self, song: Song) -> Tuple[str, "AudioProvider"]:
         """
         Search for a song using all available providers.
 
@@ -382,13 +384,13 @@ class Downloader:
         - song: The song to search for.
 
         ### Returns
-        - tuple with download url and audio provider if successful.
+        - tuple with download url and the audio provider that found it.
         """
 
         for audio_provider in self.audio_providers:
             url = audio_provider.search(song, self.settings["only_verified_results"])
             if url:
-                return url
+                return url, audio_provider
 
             logger.debug("%s failed to find %s", audio_provider.name, song.display_name)
 
@@ -650,33 +652,50 @@ class Downloader:
             # Create the output directory if it doesn't exist
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
-            audio_downloader = self.audio_providers[0]
-
-            audio_downloader.audio_handler._progress_hooks.clear()
-            audio_downloader.audio_handler.add_progress_hook(
-                display_progress_tracker.yt_dlp_progress_hook
-            )
-
             if song.download_url is None:
-                download_url = self.search(song)
+                download_url, audio_downloader = self.search(song)
             else:
                 download_url = song.download_url
+                audio_downloader = self.audio_providers[0]
 
-            logger.debug("Downloading %s using %s", song.display_name, download_url)
-            download_info = audio_downloader.get_download_metadata(
-                download_url, download=True
-            )
+            download_info = None
+            last_error = None
+            providers_to_try = [audio_downloader] + [
+                p for p in self.audio_providers if p is not audio_downloader
+            ]
+            for provider in providers_to_try:
+                try:
+                    logger.debug(
+                        "Downloading %s using %s via %s",
+                        song.display_name, download_url, provider.name,
+                    )
+                    with self._download_lock:
+                        provider.audio_handler._progress_hooks.clear()
+                        provider.audio_handler.add_progress_hook(
+                            display_progress_tracker.yt_dlp_progress_hook
+                        )
+                    download_info = provider.get_download_metadata(
+                        download_url, download=True
+                    )
+                    if download_info is not None:
+                        audio_downloader = provider
+                        break
+                except Exception as exc:
+                    last_error = exc
+                    logger.debug(
+                        "%s failed to download %s: %s",
+                        provider.name, song.display_name, exc,
+                    )
+                    url = provider.search(
+                        song, self.settings["only_verified_results"]
+                    )
+                    if url:
+                        download_url = url
 
             if download_info is None:
-                logger.debug(
-                    "No download info found for %s, url: %s",
-                    song.display_name,
-                    download_url,
-                )
-
                 raise DownloaderError(
                     f"yt-dlp failed to get metadata for: {song.name} - {song.artist}"
-                )
+                ) from last_error
 
             temp_file = Path(
                 temp_folder / f"{download_info['id']}.{download_info['ext']}"

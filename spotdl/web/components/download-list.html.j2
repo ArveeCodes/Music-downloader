@@ -1,82 +1,80 @@
-<div id="download-list">
-    <div class="m-2">
-        <h1 class="m-4 text-xl font-bold">Download Queue</h1>
-        {% if client_song_downloads|length == 0 %}
-        <div class="alert shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                class="stroke-current flex-shrink-0 w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span>No downloads queued. Search for a song to begin.</span>
-            <button class="btn btn-sm btn-primary" data-on-click="goto('/')">
-                <iconify-icon icon="clarity:search-line" style="font-size: 16px"></iconify-icon>
-                Search
-            </button>
+<div id="download-list" class="fade-in">
+    {% if client_song_downloads|length == 0 %}
+    <div class="flex flex-col items-center justify-center py-16 gap-4">
+        <div class="relative">
+            <iconify-icon icon="clarity:download-cloud-line" style="font-size: 56px" class="text-base-content/15"></iconify-icon>
         </div>
-        {% else %}
-        <div class="carousel carousel-end bg-base-200 rounded-box shadow-lg">
-            {% for client_song_download in client_song_downloads %}
-            <div key="{{ loop.index }}" class="carousel-item h-48">
-                <img src="{{ client_song_download.song.cover_url }}" alt="{{ client_song_download.song.name }}" />
-            </div>
-            {% endfor %}
+        <div class="text-center">
+            <p class="font-medium text-base-content/60 mb-1">No downloads yet</p>
+            <p class="text-sm text-base-content/40">Search for a song to start downloading</p>
         </div>
+        <button class="btn btn-primary btn-sm gap-2" data-on-click="goto('/')">
+            <iconify-icon icon="clarity:search-line" style="font-size: 16px"></iconify-icon>
+            Search
+        </button>
+    </div>
+    {% else %}
+    <div class="space-y-2">
+        {% for dl in client_song_downloads %}
+        <div key="{{ loop.index }}"
+            class="flex items-center gap-3 p-3 rounded-xl bg-base-100 border border-base-content/5 shadow-sm"
+            style="animation: fadeIn 0.2s ease-out {{ loop.index0 * 0.03 }}s both">
 
-        <div class="space-y-2 mt-4">
-            {% for client_song_download in client_song_downloads %}
-            <div key="{{ loop.index }}" class="card card-bordered card-compact bg-base-100 shadow-sm">
-                <div class="card-body flex-row items-center gap-4">
-                    <div class="avatar">
-                        <div class="w-12 h-12 rounded">
-                            <img src="{{ client_song_download.song.cover_url }}"
-                                alt="{{ client_song_download.song.name }}" />
-                        </div>
-                    </div>
-
-                    <div class="flex-1 min-w-0">
-                        <h2 class="font-semibold truncate">
-                            {{ client_song_download.song.name }}
-                        </h2>
-                        <p class="text-sm opacity-60 truncate">
-                            {{ client_song_download.song.artist }} &mdash; {{ client_song_download.song.album_name }}
-                        </p>
-                    </div>
-
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        {% if client_song_download.message == "Error" %}
-                        <span class="badge badge-error gap-1">
-                            <iconify-icon icon="clarity:error-standard-line" style="font-size: 14px"></iconify-icon>
-                            Error
-                        </span>
-                        {% elif client_song_download.progress == 100 %}
-                        <span class="badge badge-success gap-1">
-                            <iconify-icon icon="clarity:check-line" style="font-size: 14px"></iconify-icon>
-                            Done
-                        </span>
-                        <a class="btn btn-sm btn-ghost btn-square"
-                            data-attr="{href:'/api/download/file?file={{ client_song_download.path|urlencode|replace('/', '%2f') }}&client_id=' + $client_id}"
-                            download>
-                            <iconify-icon icon="clarity:download-line" style="font-size: 20px"></iconify-icon>
-                        </a>
-                        {% elif client_song_download.progress == 0 %}
-                        <span class="badge badge-info gap-1">
-                            <span class="loading loading-spinner loading-xs"></span>
-                            {{ client_song_download.message }}
-                        </span>
-                        {% else %}
-                        <span class="badge badge-warning gap-1 hidden sm:inline-flex">
-                            {{ client_song_download.message }}
-                        </span>
-                        <progress class="progress progress-primary w-24 sm:w-40"
-                            value="{{ client_song_download.progress }}" max="100"></progress>
-                        <span class="text-xs opacity-60">{{ client_song_download.progress }}%</span>
-                        {% endif %}
-                    </div>
+            <div class="avatar flex-shrink-0">
+                <div class="w-12 h-12 rounded-lg ring-1 ring-base-content/10">
+                    <img src="{{ dl.song.cover_url }}" alt="{{ dl.song.name }}" />
                 </div>
             </div>
-            {% endfor %}
+
+            <div class="flex-1 min-w-0">
+                <p class="font-medium text-sm truncate">{{ dl.song.name }}</p>
+                <p class="text-xs text-base-content/50 truncate">
+                    {{ dl.song.artist }}
+                    {% if dl.song.album_name %} &middot; {{ dl.song.album_name }}{% endif %}
+                </p>
+                {% if dl.message != "Error" and dl.progress > 0 and dl.progress < 100 %}
+                <div class="mt-1.5 flex items-center gap-2">
+                    <progress class="progress progress-primary h-1.5 flex-1 progress-bar-animated"
+                        value="{{ dl.progress }}" max="100"></progress>
+                    <span class="text-[11px] font-mono text-primary tabular-nums">{{ dl.progress }}%</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center gap-2 flex-shrink-0">
+                {% if dl.message == "Error" %}
+                <div class="tooltip tooltip-left" data-tip="Download failed">
+                    <span class="badge badge-error badge-sm gap-1">
+                        <iconify-icon icon="clarity:error-standard-line" style="font-size: 12px"></iconify-icon>
+                        Error
+                    </span>
+                </div>
+
+                {% elif dl.progress == 100 %}
+                <span class="badge badge-success badge-sm gap-1">
+                    <iconify-icon icon="clarity:check-line" style="font-size: 12px"></iconify-icon>
+                    Done
+                </span>
+                {% if dl.path %}
+                <a class="btn btn-ghost btn-xs btn-circle"
+                    data-attr="{href:'/api/download/file?file={{ dl.path|urlencode|replace('/', '%2f') }}&client_id=' + $client_id}"
+                    download title="Save file">
+                    <iconify-icon icon="clarity:download-line" style="font-size: 16px"></iconify-icon>
+                </a>
+                {% endif %}
+
+                {% elif dl.progress == 0 %}
+                <span class="flex items-center gap-1.5 text-xs text-base-content/50">
+                    <span class="loading loading-spinner loading-xs text-primary"></span>
+                    {{ dl.message }}
+                </span>
+
+                {% else %}
+                <span class="text-xs text-base-content/40 hidden sm:inline">{{ dl.message }}</span>
+                {% endif %}
+            </div>
         </div>
-        {% endif %}
+        {% endfor %}
     </div>
+    {% endif %}
 </div>

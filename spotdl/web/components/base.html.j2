@@ -2,17 +2,15 @@
 <html lang="en" data-theme="forest">
 
 <head>
-    <title>spotdl</title>
+    <title>spotDL</title>
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Download Spotify songs with metadata" />
 
     <script type="module" src="/assets/datastar.js"></script>
-
     <link href="/assets/daisyui@5.css" rel="stylesheet" type="text/css" />
     <link href="/assets/themes.css" rel="stylesheet" type="text/css" />
-
     <script src="/assets/tailwindcss/browser@4.js"></script>
-
     <script src="/assets/iconify-icon/iconify-icon.min.js"></script>
 </head>
 
@@ -25,6 +23,52 @@
 
     html, body {
         min-height: 100vh;
+        scroll-behavior: smooth;
+    }
+
+    * {
+        transition-property: background-color, border-color, color, opacity;
+        transition-duration: 150ms;
+        transition-timing-function: ease-out;
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 0 0 oklch(var(--p) / 0.3); }
+        50% { box-shadow: 0 0 16px 4px oklch(var(--p) / 0.15); }
+    }
+
+    .toast-item {
+        animation: slideUp 0.3s ease-out;
+    }
+
+    .progress-bar-animated {
+        transition: width 0.4s ease-out;
+    }
+
+    .card-hover {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -5px oklch(0 0 0 / 0.2);
+    }
+
+    .glow-border {
+        animation: pulse-glow 2s ease-in-out infinite;
     }
 </style>
 
@@ -32,18 +76,46 @@
     function goto(location) {
         window.location.href = location;
     }
+
+    (function() {
+        const saved = localStorage.getItem('spotdl-theme');
+        if (saved) {
+            document.documentElement.setAttribute('data-theme', saved);
+        }
+    })();
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('spotdl-theme', theme);
+    }
+
+    function showToast(message, type = 'info', duration = 3000) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-' + type + ' shadow-lg toast-item';
+        toast.innerHTML = '<span>' + message + '</span>';
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, duration);
+    }
 </script>
 
 <body data-signals="{'client_id': ''}"
-    data-on-load="$client_id = localStorage.getItem('client_id'); @get('/client/load')" data-theme="forest">
+    data-on-load="$client_id = localStorage.getItem('client_id'); @get('/client/load')"
+    class="bg-base-300">
 
-    <div class="bg-base-300 min-h-screen flex flex-col">
+    <div class="min-h-screen flex flex-col">
         {% include "navbar.html.j2" %}
 
-        <div class="flex-1">
+        <main class="flex-1">
             {% block content %}
             {% endblock content %}
-        </div>
+        </main>
 
         {% include "footer.html.j2" %}
 
@@ -51,14 +123,15 @@
             data-on-signal-patch="@get('/client/component/settings-content'); localStorage.setItem('client_id', $client_id);"
             data-on-signal-patch-filter="{include: /client_id/}">
         </span>
-        <dialog id="settings_modal" class="modal">
+
+        <dialog id="settings_modal" class="modal modal-bottom sm:modal-middle">
             <div id="component-settings-content"></div>
             <form method="dialog" class="modal-backdrop">
                 <button>close</button>
             </form>
         </dialog>
 
-        <div id="toast-container" class="toast toast-end toast-bottom z-50"></div>
+        <div id="toast-container" class="toast toast-end toast-bottom z-50 gap-2"></div>
     </div>
 
 </body>

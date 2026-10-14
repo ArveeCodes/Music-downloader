@@ -1,11 +1,6 @@
 
 <!--- mdformat-toc start --slug=github --->
 
-<!---
-!!! IF EDITING THE README, MOST CHANGES SHOULD ALSO BE PROPAGATED TO index.md in `/docs/`.
-!!! ADJUST FORMATTING THERE AS NEEDED, AND REMOVE README-ONLY / ReadTheDocs REFERENCES.
---->
-
 <div align="center">
 
 # spotDL v4
@@ -18,12 +13,50 @@
 ![Contributors](https://img.shields.io/github/contributors/spotDL/spotify-downloader?style=flat-square)
 [![Discord](https://img.shields.io/discord/771628785447337985?label=discord&logo=discord&style=flat-square)](https://discord.gg/xCa23pwJWY)
 
-> spotDL: The fastest, easiest and most accurate command-line music downloader.
+> The fastest, easiest and most accurate command-line music downloader.
+
 </div>
 
 ______________________________________________________________________
 **[Read the documentation on ReadTheDocs!](https://spotdl.readthedocs.io)**
 ______________________________________________________________________
+
+## Features
+
+- Download songs, albums, playlists, and artist discographies from Spotify
+- Embeds album art, lyrics, and full metadata automatically
+- Multiple audio providers: YouTube, YouTube Music, SoundCloud, Bandcamp, Piped
+- Multiple lyrics providers: Genius, Musixmatch, AZLyrics, Synced
+- Built-in web UI for browser-based downloading
+- Sync mode to keep local directories in sync with Spotify playlists
+- Configurable output format (mp3, flac, ogg, opus, m4a, wav)
+
+## Web UI
+
+spotDL includes a modern web interface built with Datastar, Tailwind CSS 4, and DaisyUI 5.
+
+```sh
+spotdl web
+```
+
+This starts a local server at `http://localhost:8800` with:
+
+- **Search** - Find songs on Spotify and download them with one click
+- **URL support** - Paste any Spotify track, album, playlist, or artist URL
+- **Live download progress** - Real-time progress bars via server-sent events
+- **Settings** - Configure audio/lyrics providers, output format, and more from the browser
+- **Dark/light theme** - Toggle between themes with the navbar switch
+- **Responsive design** - Works on desktop and mobile
+
+### Performance
+
+The web UI includes several optimizations for speed:
+
+- **Fast search** - Constructs song metadata directly from Spotify search results, eliminating redundant API calls (1 API call per search instead of 31)
+- **Search caching** - Results are cached for 5 minutes to avoid repeated API hits
+- **Request deduplication** - Concurrent searches and downloads for the same item are coalesced into a single request
+- **Audio provider fallback** - If one provider fails, automatically tries the next
+- **Adaptive polling** - SSE update intervals scale based on activity
 
 ## Installation
 
@@ -129,11 +162,15 @@ For a list of all **options** use ```spotdl -h```
 <details>
 <summary style="font-size:1em"><strong>Supported operations</strong></summary>
 
+- `download`: Downloads songs from Spotify URLs or search queries (default operation).
+
 - `save`: Saves only the metadata from Spotify without downloading anything.
     - Usage:
         `spotdl save [query] --save-file {filename}.spotdl`
 
-- `web`: Starts a web interface instead of using the command line. However, it has limited features and only supports downloading individual songs.
+- `web`: Starts a web interface instead of using the command line.
+    - Usage:
+        `spotdl web`
 
 - `url`: Get user-friendly URL for each song from the query.
     - Usage:

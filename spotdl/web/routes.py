@@ -3,8 +3,10 @@ Module which contains the web client routes and functions.
 """
 
 import asyncio
+import time
 import uuid
-from typing import Optional, cast
+from pathlib import Path
+from typing import Any, Dict, Optional, cast
 
 from datastar_py.fastapi import ReadSignals
 from datastar_py.fastapi import ServerSentEventGenerator as SSE
@@ -25,7 +27,42 @@ __all__ = ["router"]
 
 router = APIRouter()
 
-templates = Jinja2Templates(directory="spotdl/web/components")
+_TEMPLATE_DIR = str(Path(__file__).resolve().parent / "components")
+templates = Jinja2Templates(directory=_TEMPLATE_DIR)
+
+_SEARCH_CACHE_TTL = 300
+_search_cache: dict = {}
+_inflight_searches: Dict[str, asyncio.Task] = {}
+_inflight_downloads: Dict[str, asyncio.Task] = {}
+
+
+def _cached_search(term: str):
+    now = time.monotonic()
+    cached = _search_cache.get(term)
+    if cached and (now - cached[0]) < _SEARCH_CACHE_TTL:
+        return cached[1]
+    result = get_search_results(term)
+    _search_cache[term] = (now, result)
+    if len(_search_cache) > 50:
+        oldest = min(_search_cache, key=lambda k: _search_cache[k][0])
+        del _search_cache[oldest]
+    return result
+
+
+async def _do_search(term: str):
+    try:
+        return await asyncio.to_thread(_cached_search, term)
+    finally:
+        _inflight_searches.pop(term, None)
+
+
+async def _deduped_search(term: str):
+    existing = _inflight_searches.get(term)
+    if existing and not existing.done():
+        return await asyncio.shield(existing)
+    task = asyncio.create_task(_do_search(term))
+    _inflight_searches[term] = task
+    return await asyncio.shield(task)
 
 
 # PATHS
@@ -104,11 +141,15 @@ async def handle_get_client_load(datastar_signals: ReadSignals):
             "client_id": client.client_id,
         }
     )
+    last_count = -1
     try:
         while True:
-            yield SSE.patch_elements(f"""<div id="overall-completed-tasks">
-                {len(client.downloader.progress_handler.progress_tracker.songs)}
-                </div>""")
+            count = len(client.downloader.progress_handler.progress_tracker.songs)
+            if count != last_count:
+                yield SSE.patch_elements(f"""<div id="overall-completed-tasks">
+                    {count}
+                    </div>""")
+                last_count = count
             await asyncio.sleep(3)
     finally:
         app_state.logger.info(f"[{signals.client_id}] Unloading client...")
@@ -127,7 +168,6 @@ async def handle_get_client_search(datastar_signals: ReadSignals):
     is_valid_url = validate_search_term(signals.search_term)
 
     if is_valid_url:
-        # redirect client to downloads page
         app_state.logger.info(
             f"[{signals.client_id}] Valid URL detected, redirecting to downloads..."
         )
@@ -135,8 +175,9 @@ async def handle_get_client_search(datastar_signals: ReadSignals):
         signals.song_url = signals.search_term
         async for update in gen_download(signals):
             yield update
+        return
 
-    songs = get_search_results(signals.search_term)
+    songs = await _deduped_search(signals.search_term)
     yield SSE.patch_elements(
         templates.get_template("search-list.html.j2").render(
             songs=songs,
@@ -162,16 +203,28 @@ async def handle_get_client_downloads(datastar_signals: ReadSignals):
             templates.get_template("status-disconnected.html.j2").render()
         )
         return
+    last_snapshot = None
+    idle_ticks = 0
     while True:
         client_song_downloads = (
             client.downloader.progress_handler.progress_tracker.songs
         )
-        yield SSE.patch_elements(
-            templates.get_template("download-list.html.j2").render(
-                client_song_downloads=client_song_downloads.values()
-            )
+        snapshot = tuple(
+            (url, s.progress, s.message)
+            for url, s in client_song_downloads.items()
         )
-        await asyncio.sleep(2)
+        if snapshot != last_snapshot:
+            yield SSE.patch_elements(
+                templates.get_template("download-list.html.j2").render(
+                    client_song_downloads=client_song_downloads.values()
+                )
+            )
+            last_snapshot = snapshot
+            idle_ticks = 0
+        else:
+            idle_ticks += 1
+        interval = 1 if idle_ticks < 5 else 2 if idle_ticks < 30 else 4
+        await asyncio.sleep(interval)
 
 
 @router.get("/client/settings")
@@ -286,6 +339,37 @@ async def handle_post_client_download(datastar_signals: ReadSignals):
 # HELPERS
 
 
+async def _do_download(signals: Signals):
+    """
+    Execute the actual download. Returns the button HTML to patch.
+    """
+    client = Client.get_instance(signals.client_id)
+    if client is None:
+        return None
+
+    if app_state.web_settings.get("web_use_output_dir", False):
+        client.downloader.settings["output"] = client.downloader_settings["output"]
+    else:
+        client.downloader.settings["output"] = str(
+            (get_spotdl_path() / f"web/sessions/{client.client_id}").absolute()
+        )
+
+    try:
+        song = await asyncio.to_thread(Song.from_url, signals.song_url)
+        app_state.logger.info(f"Downloading song: {song}")
+        _, path = await client.downloader.pool_download(song)
+
+        if path is None:
+            app_state.logger.error(f"Failure downloading {song.name}")
+
+        return "done"
+    except Exception as exception:
+        app_state.logger.error(f"Error downloading! {exception}")
+        return "error"
+    finally:
+        _inflight_downloads.pop(signals.song_url, None)
+
+
 async def gen_download(signals: Signals):
     """
     Generate the download process for the client.
@@ -299,6 +383,14 @@ async def gen_download(signals: Signals):
             templates.get_template("status-disconnected.html.j2").render()
         )
         return
+
+    existing = _inflight_downloads.get(signals.song_url)
+    if existing and not existing.done():
+        app_state.logger.info(
+            f"[{signals.client_id}] Download already in progress: {signals.song_url}"
+        )
+        return
+
     app_state.logger.info(
         f"[{signals.client_id}] Download requested: {signals.song_url}"
     )
@@ -307,33 +399,16 @@ async def gen_download(signals: Signals):
                 </button>
         """)
 
-    if app_state.web_settings.get("web_use_output_dir", False):
-        client.downloader.settings["output"] = client.downloader_settings["output"]
-    else:
-        client.downloader.settings["output"] = str(
-            (get_spotdl_path() / f"web/sessions/{client.client_id}").absolute()
-        )
+    task = asyncio.create_task(_do_download(signals))
+    _inflight_downloads[signals.song_url] = task
+    result = await asyncio.shield(task)
 
-    try:
-        # Fetch song metadata
-        song = Song.from_url(signals.song_url)
-        app_state.logger.info(f"Downloading song: {song}")
-
-        # Download Song
-        _, path = await client.downloader.pool_download(song)
+    if result == "done":
         yield SSE.patch_elements(f"""
             <button id="download-{signals.song_url}" class="btn btn-primary btn-square">
                     <iconify-icon icon="clarity:check-line" style="font-size: 24px"></iconify-icon>
                 </button>
         """)
-
-        if path is None:
-            app_state.logger.error(f"Failure downloading {song.name}")
-
-        # return str(path.absolute())
-
-    except Exception as exception:
-        app_state.logger.error(f"Error downloading! {exception}")
 
 
 # COMPONENTS
@@ -374,28 +449,3 @@ async def handle_get_client_component_settings(datastar_signals: ReadSignals):
     )
 
 
-@router.get("/client/component/search-input-rotating-placeholder")
-@datastar_response
-async def handle_client_component_search_input_rotating_placeholder():
-    """
-    Handle the search input rotating placeholder component.
-    """
-    app_state.logger.info("Loading rotating-placeholder...")
-    placeholder_items = [
-        "All Eyes On Me - Bo Burnham",
-        "https://open.spotify.com/track/4vfN00PlILRXy5dcXHQE9M?si=e4d9e7c044dd4a8f",
-        "Lil Wayne",
-        "Drive - Miley Cyrus",
-        "Sofia - TMG",
-        "Lightning Crashes - Live",
-    ]
-    index = 0
-    while True:
-        t = templates.get_template("search-input-rotating-placeholder.html.j2").render(
-            placeholder_item=placeholder_items[index]
-        )
-        yield SSE.patch_elements(t)
-        await asyncio.sleep(5)
-        index += 1
-        if index >= len(placeholder_items):
-            index = 0

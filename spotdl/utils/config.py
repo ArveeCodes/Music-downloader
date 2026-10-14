@@ -187,7 +187,7 @@ def get_config() -> Dict[str, Any]:
 
     if not config_path.exists():
         raise ConfigError(
-            "Config file not found."
+            "Config file not found. "
             "Please run `spotdl --generate-config` to create a config file."
         )
 
@@ -248,10 +248,12 @@ def create_settings(
     # It will automatically load if the `load_config` is set to True
     # in the config file
     config = {}
-    if arguments.config or (
-        get_config_file().exists() and get_config().get("load_config")
-    ):
+    if arguments.config:
         config = get_config()
+    elif get_config_file().exists():
+        config = get_config()
+        if not config.get("load_config"):
+            config = {}
 
     # Type: ignore because of the issues below
     # https://github.com/python/mypy/issues/8890

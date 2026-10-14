@@ -137,6 +137,6 @@ class Genius(LyricsProvider):
 
         # Remove desc at the beginning if it exists
         for to_remove in ["desc", "Desc"]:
-            lyrics.replace(to_remove, "", 1)
+            lyrics = lyrics.replace(to_remove, "", 1)
 
         return lyrics
