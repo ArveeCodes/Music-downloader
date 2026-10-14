@@ -35,8 +35,8 @@ ______________________________________________________________________
 
 spotDL includes a modern web interface built with Datastar, Tailwind CSS 4, and DaisyUI 5.
 
-```sh
-spotdl web
+```
+py -m spotdl web
 ```
 
 This starts a local server at `http://localhost:8800` with:
