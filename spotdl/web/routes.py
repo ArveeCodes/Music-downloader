@@ -23,6 +23,7 @@ from spotdl.utils.search import (
     create_ytm_album,
     create_ytm_playlist,
     get_search_results,
+    get_simple_songs,
     reinit_song,
 )
 from spotdl.utils.web import (
@@ -189,6 +190,16 @@ async def handle_get_client_search(datastar_signals: ReadSignals):
             )
             yield SSE.redirect("/downloads")
             async for update in gen_download_ytm_list(signals):
+                yield update
+            return
+
+        # YouTube Music single track link — resolve via YTM + Spotify match
+        if is_ytm_url(signals.search_term) and get_ytm_url_type(signals.search_term) == "track":
+            app_state.logger.info(
+                f"[{signals.client_id}] YTM track URL detected, resolving..."
+            )
+            yield SSE.redirect("/downloads")
+            async for update in gen_download_ytm_track(signals):
                 yield update
             return
 
@@ -392,6 +403,52 @@ async def _do_download(signals: Signals):
         return "error"
     finally:
         _inflight_downloads.pop(signals.song_url, None)
+
+
+async def gen_download_ytm_track(signals: Signals):
+    """
+    Download a single YouTube Music track (music.youtube.com/watch?v=...).
+    Uses get_simple_songs to do the YTM metadata fetch + Spotify match,
+    then downloads and shows progress via the standard per-song download list.
+    """
+    client = Client.get_instance(signals.client_id)
+    if client is None:
+        app_state.logger.warning(
+            f"[{signals.client_id}] Client not found, cannot download YTM track."
+        )
+        yield SSE.patch_elements(
+            templates.get_template("status-disconnected.html.j2").render()
+        )
+        return
+
+    url = signals.search_term
+
+    if app_state.web_settings.get("web_use_output_dir", False):
+        client.downloader.settings["output"] = client.downloader_settings["output"]
+    else:
+        client.downloader.settings["output"] = str(
+            (get_spotdl_path() / f"web/sessions/{client.client_id}").absolute()
+        )
+
+    try:
+        # get_simple_songs handles music.youtube.com/watch?v= by calling
+        # ytmusicapi.get_song(), then searching Spotify for a metadata match
+        songs = await asyncio.to_thread(get_simple_songs, [url])
+        if not songs:
+            raise ValueError(f"Could not resolve YTM track: {url}")
+        song = songs[0]
+        app_state.logger.info(
+            f"[{signals.client_id}] YTM track resolved: {song.display_name}"
+        )
+        _, path = await client.downloader.pool_download(song)
+        if path is None:
+            app_state.logger.error(
+                f"[{signals.client_id}] YTM track path=None: {song.display_name}"
+            )
+    except Exception as exc:
+        app_state.logger.error(
+            f"[{signals.client_id}] YTM track download error: {exc}"
+        )
 
 
 async def gen_download_ytm_list(signals: Signals):
