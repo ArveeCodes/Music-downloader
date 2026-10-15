@@ -10,6 +10,9 @@
         <h1 class="text-xl font-bold">Downloads</h1>
     </div>
 
+    {# Container for YouTube Music playlist / album progress cards #}
+    <div id="ytm-downloads"></div>
+
     <div id="download-list" data-on-load="@get('/client/downloads')">
         <div class="flex flex-col items-center justify-center py-20 gap-4 fade-in">
             <span class="loading loading-ring loading-lg text-primary"></span>

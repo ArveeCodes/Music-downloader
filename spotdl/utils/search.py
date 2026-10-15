@@ -698,9 +698,11 @@ def create_ytm_playlist(url: str, fetch_songs: bool = True) -> Playlist:
         raise ValueError(f"Invalid playlist url: {url}")
 
     if "/browse/VLPL" in url:
-        playlist_id = url.split("/browse/")[1]
+        # Strip any trailing query params (e.g. &si=...) from the browse ID
+        playlist_id = url.split("/browse/")[1].split("?")[0].split("&")[0]
     else:
-        playlist_id = url.split("?list=")[1]
+        # Strip extra query params after the list value (e.g. &si=..., &feature=...)
+        playlist_id = url.split("?list=")[1].split("&")[0]
     playlist = get_ytm_client().get_playlist(playlist_id, None)  # type: ignore
 
     if playlist is None:

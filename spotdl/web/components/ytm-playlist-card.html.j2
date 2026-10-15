@@ -1,0 +1,92 @@
+{# ytm-playlist-card.html.j2 — Live progress card for a YTM playlist/album download #}
+<div id="{{ card_id }}"
+     class="rounded-2xl border border-base-content/8 bg-base-100 shadow-md p-4 mb-3 fade-in">
+
+    {# ── Header row ── #}
+    <div class="flex items-start gap-3">
+        {# YTM logo badge #}
+        <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+             style="background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);">
+            <iconify-icon icon="mdi:youtube-music" style="font-size: 22px; color: #fff;"></iconify-icon>
+        </div>
+
+        <div class="flex-1 min-w-0">
+            <p class="font-semibold text-sm truncate leading-tight">{{ list_name }}</p>
+            <p class="text-xs text-base-content/50 mt-0.5">
+                YouTube Music &middot;
+                {% if list_type == "album" %}
+                    <span class="badge badge-xs badge-outline">Album</span>
+                {% else %}
+                    <span class="badge badge-xs badge-outline">Playlist</span>
+                {% endif %}
+                &middot; {{ total }} track{% if total != 1 %}s{% endif %}
+            </p>
+        </div>
+
+        {# Status badge (right-aligned) #}
+        <div class="flex-shrink-0">
+            {% if state == "done" %}
+                <span class="badge badge-success badge-sm gap-1">
+                    <iconify-icon icon="clarity:check-line" style="font-size: 12px;"></iconify-icon>
+                    Done
+                </span>
+            {% elif state == "error" %}
+                <span class="badge badge-error badge-sm gap-1">
+                    <iconify-icon icon="clarity:error-standard-line" style="font-size: 12px;"></iconify-icon>
+                    Error
+                </span>
+            {% else %}
+                <span class="flex items-center gap-1.5 text-xs text-base-content/50">
+                    <span class="loading loading-spinner loading-xs" style="color: #ff0000;"></span>
+                    Downloading&hellip;
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Error message ── #}
+    {% if state == "error" and error_msg %}
+    <div class="mt-3 text-xs text-error bg-error/10 rounded-lg px-3 py-2 break-all">
+        {{ error_msg }}
+    </div>
+    {% endif %}
+
+    {# ── Progress bar (only when there are tracks to show) ── #}
+    {% if total > 0 and state != "error" %}
+    {% set completed = done + failed %}
+    {% set pct = (completed / total * 100) | int %}
+    <div class="mt-3">
+        <div class="flex justify-between text-xs text-base-content/50 mb-1.5">
+            <span>{{ completed }} / {{ total }}</span>
+            <span>{{ pct }}%</span>
+        </div>
+        <div class="w-full bg-base-300 rounded-full h-2 overflow-hidden">
+            <div class="h-2 rounded-full progress-bar-animated transition-all duration-500"
+                 style="width: {{ pct }}%; background: linear-gradient(90deg, #ff0000, #cc0000);"></div>
+        </div>
+    </div>
+
+    {# ── Track counters ── #}
+    <div class="mt-2.5 flex flex-wrap gap-4 text-xs">
+        {% if done > 0 %}
+        <span class="flex items-center gap-1 text-success">
+            <iconify-icon icon="clarity:check-circle-line" style="font-size: 13px;"></iconify-icon>
+            {{ done }} done
+        </span>
+        {% endif %}
+        {% if failed > 0 %}
+        <span class="flex items-center gap-1 text-error">
+            <iconify-icon icon="clarity:times-circle-line" style="font-size: 13px;"></iconify-icon>
+            {{ failed }} failed
+        </span>
+        {% endif %}
+        {% if completed < total %}
+        <span class="flex items-center gap-1 text-base-content/40">
+            <iconify-icon icon="clarity:clock-line" style="font-size: 13px;"></iconify-icon>
+            {{ total - completed }} remaining
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>

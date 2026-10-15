@@ -16,12 +16,12 @@
                 spot<span class="text-primary">DL</span>
             </h1>
             <p class="text-base-content/60 text-lg mb-8 max-w-md mx-auto">
-                Download your Spotify playlists, albums, and songs with full metadata
+                Download your Spotify & YouTube Music playlists, albums, and songs with full metadata
             </p>
 
             <div class="w-full max-w-lg mx-auto mb-6" data-signals="{home_search: ''}">
                 <div class="join w-full shadow-xl glow-border rounded-xl">
-                    <input type="text" placeholder="Paste a Spotify URL or search for a song..."
+                    <input type="text" placeholder="Paste a Spotify or YouTube Music URL, or search for a song..."
                         class="input input-lg join-item w-full bg-base-100 border-base-content/10 focus:border-primary/50 text-base"
                         data-bind="home_search"
                         data-on-keydown="evt.key === 'Enter' && $home_search && goto('/search?q=' + encodeURIComponent($home_search))">
@@ -48,6 +48,11 @@
                 <span class="badge badge-outline badge-lg gap-1.5 text-base-content/50 hover:text-base-content hover:border-primary/50 cursor-default transition-colors">
                     <iconify-icon icon="clarity:users-line" style="font-size: 14px"></iconify-icon>
                     Artists
+                </span>
+                <span class="badge badge-outline badge-lg gap-1.5 cursor-default transition-colors"
+                      style="color: #ff0000; border-color: #ff000040;" title="YouTube Music playlists &amp; albums supported">
+                    <iconify-icon icon="mdi:youtube-music" style="font-size: 14px"></iconify-icon>
+                    YouTube Music
                 </span>
             </div>
 

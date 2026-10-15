@@ -28,6 +28,9 @@ __all__ = [
     "get_current_state",
     "get_client",
     "fix_mime_types",
+    "validate_search_term",
+    "is_ytm_url",
+    "get_ytm_url_type",
 ]
 
 ALLOWED_ORIGINS = [
@@ -268,19 +271,59 @@ def fix_mime_types():
     mimetypes.add_type("text/html", ".html")
 
 
+def is_ytm_url(search_term: str) -> bool:
+    """
+    Check whether *search_term* is a YouTube Music URL that spotdl can handle.
+
+    Supported forms:
+    - music.youtube.com/playlist?list=...   (playlist or album via list ID)
+    - music.youtube.com/browse/VLPL...      (channel-playlist browse link)
+    - music.youtube.com/watch?v=...         (single track)
+
+    ### Arguments
+    - search_term: The string to test.
+
+    ### Returns
+    - True if it matches a supported YTM URL pattern.
+    """
+    if not search_term:
+        return False
+    return (
+        "music.youtube.com/playlist?list=" in search_term
+        or "music.youtube.com/browse/VLPL" in search_term
+        or "music.youtube.com/watch?v" in search_term
+    )
+
+
+def get_ytm_url_type(url: str) -> str:
+    """
+    Return a human-readable type string for a YTM URL.
+
+    ### Returns
+    - "playlist", "album", or "track"
+    """
+    if "music.youtube.com/watch?v" in url:
+        return "track"
+    if "?list=OLAK5uy_" in url:
+        return "album"
+    return "playlist"
+
+
 def validate_search_term(search_term: str) -> bool:
     """
-    Validate the search term to check if it is a valid Spotify URL.
+    Validate the search term to check if it is a valid Spotify or YouTube Music URL
+    that can be routed directly to the download pipeline.
 
     ### Arguments
     - search_term: The search term to validate.
 
     ### Returns
-    - True if the search term is valid, False otherwise.
+    - True if the search term is a recognised downloadable URL, False otherwise.
     """
     return search_term != "" and (
         "://open.spotify.com/track/" in search_term
         or "://open.spotify.com/album/" in search_term
         or "://open.spotify.com/playlist/" in search_term
         or "://open.spotify.com/artist/" in search_term
+        or is_ytm_url(search_term)
     )

@@ -19,8 +19,19 @@ from spotdl.download.downloader import AUDIO_PROVIDERS, LYRICS_PROVIDERS
 from spotdl.types.song import Song
 from spotdl.utils.config import get_spotdl_path
 from spotdl.utils.ffmpeg import FFMPEG_FORMATS
-from spotdl.utils.search import get_search_results
-from spotdl.utils.web import Client, app_state, validate_search_term
+from spotdl.utils.search import (
+    create_ytm_album,
+    create_ytm_playlist,
+    get_search_results,
+    reinit_song,
+)
+from spotdl.utils.web import (
+    Client,
+    app_state,
+    get_ytm_url_type,
+    is_ytm_url,
+    validate_search_term,
+)
 from spotdl.web.utils import Signals, handle_signals
 
 __all__ = ["router"]
@@ -168,6 +179,19 @@ async def handle_get_client_search(datastar_signals: ReadSignals):
     is_valid_url = validate_search_term(signals.search_term)
 
     if is_valid_url:
+        # YouTube Music list/album link — use the rich playlist download flow
+        if is_ytm_url(signals.search_term) and get_ytm_url_type(signals.search_term) in (
+            "playlist",
+            "album",
+        ):
+            app_state.logger.info(
+                f"[{signals.client_id}] YTM list URL detected, starting playlist download..."
+            )
+            yield SSE.redirect("/downloads")
+            async for update in gen_download_ytm_list(signals):
+                yield update
+            return
+
         app_state.logger.info(
             f"[{signals.client_id}] Valid URL detected, redirecting to downloads..."
         )
@@ -368,6 +392,150 @@ async def _do_download(signals: Signals):
         return "error"
     finally:
         _inflight_downloads.pop(signals.song_url, None)
+
+
+async def gen_download_ytm_list(signals: Signals):
+    """
+    Download every song in a YouTube Music playlist or album, emitting a
+    live playlist-card element that updates as each track finishes.
+    """
+    client = Client.get_instance(signals.client_id)
+    if client is None:
+        app_state.logger.warning(
+            f"[{signals.client_id}] Client not found, cannot start YTM download."
+        )
+        yield SSE.patch_elements(
+            templates.get_template("status-disconnected.html.j2").render()
+        )
+        return
+
+    url = signals.search_term
+    url_type = get_ytm_url_type(url)
+    card_id = f"ytm-list-{abs(hash(url)) % 10**8}"
+
+    # ------------------------------------------------------------------
+    # 1. Resolve playlist / album metadata (non-blocking)
+    # ------------------------------------------------------------------
+    try:
+        if url_type == "album":
+            song_list = await asyncio.to_thread(create_ytm_album, url, False)
+        else:
+            song_list = await asyncio.to_thread(create_ytm_playlist, url, False)
+    except Exception as exc:
+        app_state.logger.error(f"[{signals.client_id}] YTM metadata error: {exc}")
+        yield SSE.patch_elements(
+            templates.get_template("ytm-playlist-card.html.j2").render(
+                card_id=card_id,
+                list_name=url,
+                list_type=url_type,
+                total=0,
+                done=0,
+                failed=0,
+                state="error",
+                error_msg=str(exc),
+            ),
+            selector="#ytm-downloads",
+            mode="append",
+        )
+        return
+
+    total = len(song_list.songs)
+    list_name = song_list.name
+    app_state.logger.info(
+        f"[{signals.client_id}] YTM {url_type} '{list_name}': {total} tracks"
+    )
+
+    # ------------------------------------------------------------------
+    # 2. Append initial card into #ytm-downloads (downloading state)
+    # ------------------------------------------------------------------
+    yield SSE.patch_elements(
+        templates.get_template("ytm-playlist-card.html.j2").render(
+            card_id=card_id,
+            list_name=list_name,
+            list_type=url_type,
+            total=total,
+            done=0,
+            failed=0,
+            state="downloading",
+            error_msg="",
+        ),
+        selector="#ytm-downloads",
+        mode="append",
+    )
+
+    # ------------------------------------------------------------------
+    # 3. Configure output folder  <session>/<Playlist Name>/
+    # ------------------------------------------------------------------
+    safe_name = "".join(
+        c if c.isalnum() or c in " -_()" else "_" for c in list_name
+    ).strip()
+
+    if app_state.web_settings.get("web_use_output_dir", False):
+        base_out = client.downloader_settings["output"]
+        # Insert the playlist subfolder just before the first template token
+        if "{" in base_out:
+            prefix, rest = base_out.split("{", 1)
+            session_out = prefix + safe_name + "/" + "{" + rest
+        else:
+            session_out = str(Path(base_out) / safe_name)
+    else:
+        session_out = str(
+            (get_spotdl_path() / f"web/sessions/{client.client_id}/{safe_name}").absolute()
+        )
+
+    client.downloader.settings["output"] = session_out
+
+    # ------------------------------------------------------------------
+    # 4. Download tracks one-by-one, updating the card after each
+    # ------------------------------------------------------------------
+    done = 0
+    failed = 0
+
+    for song in song_list.songs:
+        try:
+            full_song = await asyncio.to_thread(reinit_song, song)
+            _, path = await client.downloader.pool_download(full_song)
+            if path is None:
+                failed += 1
+                app_state.logger.error(
+                    f"[{signals.client_id}] YTM: path=None for '{song.name}'"
+                )
+            else:
+                done += 1
+        except Exception as exc:
+            failed += 1
+            app_state.logger.error(
+                f"[{signals.client_id}] YTM download error '{song.name}': {exc}"
+            )
+
+        yield SSE.patch_elements(
+            templates.get_template("ytm-playlist-card.html.j2").render(
+                card_id=card_id,
+                list_name=list_name,
+                list_type=url_type,
+                total=total,
+                done=done,
+                failed=failed,
+                state="downloading",
+                error_msg="",
+            )
+        )
+
+    # ------------------------------------------------------------------
+    # 5. Final card state
+    # ------------------------------------------------------------------
+    yield SSE.patch_elements(
+        templates.get_template("ytm-playlist-card.html.j2").render(
+            card_id=card_id,
+            list_name=list_name,
+            list_type=url_type,
+            total=total,
+            done=done,
+            failed=failed,
+            state="done",
+            error_msg="",
+        )
+    )
 
 
 async def gen_download(signals: Signals):
