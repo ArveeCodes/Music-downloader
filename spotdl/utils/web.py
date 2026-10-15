@@ -6,6 +6,7 @@ FastAPI routes/classes etc.
 import asyncio
 import logging
 import mimetypes
+import re
 from argparse import Namespace
 from typing import Any, Dict, Optional, Union
 
@@ -89,6 +90,24 @@ class Client:
         - client_id: The client's ID.
         """
 
+        # Validate client_id to prevent path traversal attacks
+        # (client_id is used in file paths for session directories)
+        if not re.match(r"^[a-f0-9]{1,64}$", client_id):
+            raise ValueError(f"Invalid client_id format: {client_id!r}")
+        self.client_id = client_id
+        self._initialized = False
+        # Number of live SSE streams / background downloads using this client.
+        # The disconnect timer may only fire when this drops to zero —
+        # otherwise a stale stream closing late (e.g. after a page
+        # navigation) would start a timer that kills the client while the
+        # new page is still actively using it.
+        self._active_streams = 0
+        self.disconnect_timer = None
+
+        # Register immediately so concurrent requests find this client
+        # even before slow initialization completes
+        app_state.clients[self.client_id] = self
+
         self.downloader_settings = DownloaderOptions(
             **create_settings_type(
                 Namespace(config=False),
@@ -97,7 +116,6 @@ class Client:
             )  # type: ignore
         )
 
-        self.client_id = client_id
         self.downloader = Downloader(
             settings=self.downloader_settings, loop=app_state.loop
         )
@@ -108,22 +126,33 @@ class Client:
             web_ui=True,
         )
 
-        self.disconnect_timer = None
+        self._initialized = True
 
     async def connect(self):
         """
-        Called when a new client connects.
+        Called when a stream (or background download) starts using the client.
         """
+        self._active_streams += 1
         if self.disconnect_timer is not None:
             self.disconnect_timer.cancel()
             self.disconnect_timer = None
         app_state.clients[self.client_id] = self
-        app_state.logger.info("Client %s connected", self.client_id)
+        app_state.logger.info(
+            "Client %s connected (%d active streams)",
+            self.client_id,
+            self._active_streams,
+        )
 
     async def disconnect(self):
         """
-        Called when a client disconnects from the websocket.
+        Called when a stream stops using the client. Only schedules removal
+        once the LAST active stream has gone away.
         """
+
+        self._active_streams = max(0, self._active_streams - 1)
+        if self._active_streams > 0:
+            # Another page/stream/download is still using this client
+            return
 
         if self.disconnect_timer is not None:
             self.disconnect_timer.cancel()
@@ -139,6 +168,10 @@ class Client:
         """
         Disconnect the client (runs on the event loop thread).
         """
+        if self._active_streams > 0:
+            # A stream reconnected after the timer was scheduled
+            self.disconnect_timer = None
+            return
         if self.client_id in app_state.clients:
             del app_state.clients[self.client_id]
             app_state.logger.info("Client %s disconnected", self.client_id)

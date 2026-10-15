@@ -1,0 +1,20 @@
+{#- Inline SVG icon set (lucide-style strokes). Replaces the iconify-icon
+    web component: no extra JS, no runtime icon fetches. -#}
+{% set _ICON_PATHS = {
+    'search':   '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/>',
+    'download': '<path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/>',
+    'settings': '<path d="M4 7h9"/><circle cx="17" cy="7" r="2.5"/><path d="M20 17h-9"/><circle cx="7" cy="17" r="2.5"/>',
+    'check':    '<path d="m5 13 4 4 10-10"/>',
+    'close':    '<path d="m6 6 12 12M18 6 6 18"/>',
+    'external': '<path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/>',
+    'music':    '<path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+    'disc':     '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/>',
+    'list':     '<path d="M4 6h.01M4 12h.01M4 18h.01M9 6h11M9 12h11M9 18h11"/>',
+    'user':     '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+    'alert':    '<path d="M12 8v5"/><path d="M12 16.5h.01"/><circle cx="12" cy="12" r="9"/>',
+    'arrow':    '<path d="M5 12h13"/><path d="m13 6 6 6-6 6"/>',
+    'verified': '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/>'
+} %}
+{% macro icon(name, size=18, stroke=1.8, cls='') -%}
+<svg class="{{ cls }}" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ stroke }}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ _ICON_PATHS.get(name, '')|safe }}</svg>
+{%- endmacro %}

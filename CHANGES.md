@@ -1,13 +1,71 @@
-# spotDL Web UI — Changes & Context
+# Kraken — Changes & Context
 
 ## Project Overview
 
-- **Repo**: `spotDL/spotify-downloader` (v4.5.0)
-- **Stack**: Python 3.10+, FastAPI, Jinja2 templates, Datastar (reactive SSE framework), Tailwind CSS 4, DaisyUI 5, Iconify icons
+- **Repo**: `ArveeCodes/spotify-downloader`, branch `main` (built on spotDL v4.5.0)
+- **Stack**: Python 3.10+, FastAPI, Jinja2 templates, Datastar (reactive SSE framework), Tailwind CSS 4, DaisyUI 5 (`night` theme), inline SVG icons via `icons.html.j2` (Iconify is still loaded for templates that use `<iconify-icon>`)
+- **Downloads**: saved to `E:\Music Downloader\downloads` (set in `~/.spotdl/config.json`, see README)
 - **Working dir**: `E:\Music Downloader` (this IS the repo root — no subfolder)
 - **Entry point**: `spotdl web` starts the FastAPI server via `spotdl/console/web.py`
 - **Frontend**: Server-rendered Jinja2 templates in `spotdl/web/components/`, reactive updates via Datastar SSE patches
 - **API**: REST endpoints in `spotdl/web/api.py`, SSE routes in `spotdl/web/routes.py`
+
+---
+
+## Latest: navy redesign, live link downloads, downloads folder
+
+### UI
+- **Name**: the app is now called **Kraken**. The wordmark (`.wordmark` in `base.html.j2`) is uppercase with wide tracking and a white-to-blue gradient. This is the display name only; the Python package, the commands (`spotdl ...`) and the config folder (`~/.spotdl`) are unchanged.
+- **Navy theme**: all colors are CSS variables in `base.html.j2` (`--bg #08142b`, `--surface`, `--accent #5b9bff`, ...), with DaisyUI's `night` theme underneath so built-in components match. A static glow sits at the top of the page; there are no animated backgrounds or backdrop blur.
+- **Icons**: inline SVGs from the `icon()` macro in `icons.html.j2`, so there are no runtime icon fetches.
+- **Logo and favicon**: navy tile with blue equalizer bars and a white download arrow; the SVG doubles as the favicon.
+- **Home**: tagline "Paste a link. Keep the music." plus a three-step explainer.
+- **Search results**: grouped into Artists, Albums and Songs panels.
+- **Footer**: links to this repo and credits upstream spotDL.
+
+### Link downloads (the old redirect is gone)
+- Pasting a Spotify link used to redirect to `/downloads`. `handle_get_client_search` now streams an inline card: resolving, then a live percentage, then done, partial or failed. Collections also show "x of y".
+- `background_download` runs the batch as a task, so it keeps going if the page closes, and it pins the client session while running.
+- Submitting the same link again attaches to the running download instead of starting a duplicate.
+
+### Search
+- `quick_search` builds songs, albums and artists from one `searchDesktop` call (previously about three API calls per track). It still goes through `_cached_search` / `_deduped_search`.
+
+### Files and folders
+- Downloads are saved to `E:\Music Downloader\downloads` (`web_use_output_dir: true` with an absolute `output` path in the config).
+- Albums, playlists and artists get a subfolder named after the collection (`_output_with_subfolder`, with unsafe characters stripped).
+- `Downloader.search_and_download(song, output_template)` takes the destination per call, so concurrent downloads can no longer redirect each other through shared settings.
+
+### Reliability and security
+- `Client` registers itself before its slow initialization, exposes an `_initialized` flag, and ref-counts its streams, so a late-closing stream can't remove a session that's still in use.
+- `client_id` must be hex (it's used in file paths), and `handle_signals` validates and sanitizes it.
+- Jinja autoescape is on, and download buttons use hashed IDs (`safe_id`) instead of raw URLs.
+- `wait_for_client` covers the race between `/client/load` and the other endpoints.
+
+### Performance
+- `utils/spotapi_cache.py` shares one Spotify session across requests and persists its query hashes to `~/.spotdl/spotapi-hashes.json`. Link resolution dropped from about 60s to about 1s.
+- The navbar badge and the downloads list only send a patch when something changed. The rotating search placeholder is now client-side JS (its SSE endpoint was removed).
+- `api.py` `songs_from_url` uses `fetch_songs=False` instead of re-fetching every track.
+
+### File map (this round)
+
+```
+spotdl/
+├── download/downloader.py         # Per-call output_template
+├── utils/
+│   ├── spotapi_cache.py           # New: shared Spotify session + persisted hashes
+│   ├── spotify.py                 # Installs the session cache
+│   └── web.py                     # Client init flag, ref-counted streams, id validation
+└── web/
+    ├── api.py                     # Faster songs_from_url
+    ├── routes.py                  # Inline link downloads, quick_search, helpers
+    ├── utils.py                   # Signal validation
+    ├── static/assets/spotdl.svg   # New logo / favicon
+    └── components/                # Navy redesign; new icons.html.j2;
+                                   # search-input-rotating-placeholder removed
+```
+
+Code paths not listed here were left unchanged.
 
 ---
 
@@ -149,11 +207,11 @@ spotdl/
 
 ## What Still Needs Work
 
-- **No persistent theme**: Theme switcher resets on page reload — needs localStorage persistence
-- **Rotating placeholder SSE**: The search placeholder rotation runs an infinite SSE loop just to cycle 6 strings — could be pure client-side JS
-- **`songs_from_url` in api.py**: Does sequential `Song.from_url` per playlist track — could parallelize with asyncio
-- **No error toasts**: Toast container div exists but nothing populates it yet
-- **`validate_search_term` in utils/web.py**: Only accepts Spotify URLs — doesn't handle YouTube URLs or plain search queries that spotdl supports via CLI
-- **`web.py` console module**: Creates `ProactorEventLoop` on Windows which is deprecated in newer Python
-- **No batch download**: Can only download one song at a time from search results
-- **Tests**: No changes to test files — existing tests in `tests/` should still pass but worth verifying
+Resolved in the latest round and removed from this list: the theme-reset bug (there's a single theme now), the rotating-placeholder SSE loop, the slow per-track `songs_from_url`, and the single-song-only downloads (album, playlist and artist rows download whole collections).
+
+- **No error toasts**: the toast container exists but nothing uses it. Errors currently show as inline cards on the search page.
+- **`web.py` console module**: creates a `ProactorEventLoop` on Windows, which is deprecated in newer Python.
+- **No multi-select**: songs in search results still download one at a time.
+- **Iconify**: still loaded for templates that use `<iconify-icon>`. Converting those to the `icon()` macro would let the script be dropped.
+- **Temporary-folder mode**: with `web_use_output_dir` off, files are saved one at a time from the Downloads page, so album folders don't survive. A zip download per collection would fix that.
+- **Tests**: `tests/utils/test_config.py` (5 tests, Windows path handling), `tests/console/test_entry_point.py::test_preload_song`, `tests/test_init.py::test_download` (its source video is no longer available) and 2 setup errors in `test_downloader.py` / `test_spotify.py` fail. They fail the same way on the commit before the latest round, so they're pre-existing. The web layer has no automated tests.

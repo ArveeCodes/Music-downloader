@@ -1,5 +1,6 @@
-<button class="btn btn-ghost btn-circle btn-sm"
-    data-on-click="@get('/client/component/settings-content'); settings_modal.showModal()"
-    title="Settings">
-    <iconify-icon icon="clarity:settings-line" style="font-size: 18px"></iconify-icon>
+{% from "icons.html.j2" import icon %}
+<!-- Settings Button -->
+<button class="icon-btn" title="Settings"
+    data-on-click="@get('/client/component/settings-content'); settings_modal.showModal()">
+    {{ icon('settings', 18) }}
 </button>

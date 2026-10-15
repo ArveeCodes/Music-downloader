@@ -1,24 +1,21 @@
 {% extends "base.html.j2" %}
-
 {% block content %}
-
-<div class="min-h-[calc(100vh-8rem)] p-4 max-w-3xl mx-auto">
-    <div class="flex items-center gap-3 mb-6">
-        <button class="btn btn-ghost btn-sm btn-circle" onclick="goto('/')">
-            <iconify-icon icon="clarity:arrow-line" style="font-size: 18px; transform: rotate(180deg)"></iconify-icon>
-        </button>
-        <h1 class="text-xl font-bold">Downloads</h1>
-    </div>
+{% from "icons.html.j2" import icon %}
+<div class="min-h-screen px-4 py-8">
+    <div class="max-w-3xl mx-auto fade-in">
+        <div class="flex items-center gap-2.5 mb-5">
+            <span class="text-accent">{{ icon('download', 20) }}</span>
+            <h1 class="text-xl font-semibold">Downloads</h1>
+        </div>
 
     {# Container for YouTube Music playlist / album progress cards #}
     <div id="ytm-downloads"></div>
 
-    <div id="download-list" data-on-load="@get('/client/downloads')">
-        <div class="flex flex-col items-center justify-center py-20 gap-4 fade-in">
-            <span class="loading loading-ring loading-lg text-primary"></span>
-            <span class="text-base-content/50">Loading downloads...</span>
+        <div id="download-list" data-on-load="@get('/client/downloads')">
+            <div class="flex items-center justify-center py-24">
+                <span class="loading loading-spinner loading-md" style="color: var(--accent);"></span>
+            </div>
         </div>
     </div>
 </div>
-
 {% endblock content %}

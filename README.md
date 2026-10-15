@@ -1,218 +1,148 @@
-
-<!--- mdformat-toc start --slug=github --->
-
 <div align="center">
 
-# spotDL v4
+<img src="spotdl/web/static/assets/spotdl.svg" width="84" alt="Kraken logo" />
 
-**spotDL** finds songs from Spotify playlists on YouTube and downloads them - along with album art, lyrics and metadata.
+# Kraken
 
-[![MIT License](https://img.shields.io/github/license/spotdl/spotify-downloader?color=44CC11&style=flat-square)](https://github.com/spotDL/spotify-downloader/blob/master/LICENSE)
-[![PyPI version](https://img.shields.io/pypi/pyversions/spotDL?color=%2344CC11&style=flat-square)](https://pypi.org/project/spotdl/)
-[![PyPi downloads](https://img.shields.io/pypi/dw/spotDL?label=downloads@pypi&color=344CC11&style=flat-square)](https://pypi.org/project/spotdl/)
-![Contributors](https://img.shields.io/github/contributors/spotDL/spotify-downloader?style=flat-square)
-[![Discord](https://img.shields.io/discord/771628785447337985?label=discord&logo=discord&style=flat-square)](https://discord.gg/xCa23pwJWY)
+**Paste a link. Keep the music.**
 
-> The fastest, easiest and most accurate command-line music downloader.
+Download Spotify songs, albums, playlists and artists with cover art, lyrics and full metadata, from a clean web app or the command line.
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-5b9bff?style=flat-square)](LICENSE)
+[![Python 3.10 – 3.14](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-5b9bff?style=flat-square)](https://www.python.org/downloads/)
 
 </div>
 
-______________________________________________________________________
-**[Read the documentation on ReadTheDocs!](https://spotdl.readthedocs.io)**
-______________________________________________________________________
+---
 
-## Features
+## Highlights
 
-- Download songs, albums, playlists, and artist discographies from Spotify
-- Embeds album art, lyrics, and full metadata automatically
-- Multiple audio providers: YouTube, YouTube Music, SoundCloud, Bandcamp, Piped
-- Multiple lyrics providers: Genius, Musixmatch, AZLyrics, Synced
-- Built-in web UI for browser-based downloading
-- Sync mode to keep local directories in sync with Spotify playlists
-- Configurable output format (mp3, flac, ogg, opus, m4a, wav)
+- **Search everything**: one search returns matching songs, albums and artists.
+- **Paste any Spotify link**: track, album, playlist or artist. No extra steps.
+- **Live progress**: watch each download climb to 100%, with a clear done, partial or failed result.
+- **Organized automatically**: albums, playlists and artist catalogs each get their own folder.
+- **Full metadata**: cover art, lyrics (when available), artist, album and track numbers embedded in every file.
+- **Fast**: about one second per search, and links resolve in about a second once the session is warm.
 
-## Web UI
+## Quick start
 
-spotDL includes a modern web interface built with Datastar, Tailwind CSS 4, and DaisyUI 5.
+Kraken is built on spotDL, so the package and the commands are still called `spotdl`.
 
-```
-py -m spotdl web
-```
+**1. Install** (Python 3.10–3.14)
 
-This starts a local server at `http://localhost:8800` with:
-
-- **Search** - Find songs on Spotify and download them with one click
-- **URL support** - Paste any Spotify track, album, playlist, or artist URL
-- **Live download progress** - Real-time progress bars via server-sent events
-- **Settings** - Configure audio/lyrics providers, output format, and more from the browser
-- **Dark/light theme** - Toggle between themes with the navbar switch
-- **Responsive design** - Works on desktop and mobile
-
-### Performance
-
-The web UI includes several optimizations for speed:
-
-- **Fast search** - Constructs song metadata directly from Spotify search results, eliminating redundant API calls (1 API call per search instead of 31)
-- **Search caching** - Results are cached for 5 minutes to avoid repeated API hits
-- **Request deduplication** - Concurrent searches and downloads for the same item are coalesced into a single request
-- **Audio provider fallback** - If one provider fails, automatically tries the next
-- **Adaptive polling** - SSE update intervals scale based on activity
-
-## Installation
-
-Refer to our [Installation Guide](docs/installation.md) for more details.
-
-### Python (Recommended Method)
-
-- _spotDL_ can be installed by running `pip install spotdl`.
-- To update spotDL run `pip install --upgrade spotdl`
-
-  > On some systems you might have to change `pip` to `pip3`.
-
-<details>
-    <summary style="font-size:1.25em"><strong>Other options</strong></summary>
-
-- Prebuilt executable
-  - You can download the latest version from the
-    [Releases Tab](https://github.com/spotDL/spotify-downloader/releases)
-- On Termux
-  - `curl -L https://raw.githubusercontent.com/spotDL/spotify-downloader/master/scripts/termux.sh | sh`
-- Arch
-  - There is an [Arch User Repository (AUR) package](https://aur.archlinux.org/packages/spotdl/) for
-    spotDL.
-- Docker
-  - Build image:
-
-    ```bash
-    docker build -t spotdl .
-    ```
-
-  - Launch container with spotDL parameters (see section below). You need to create mapped
-    volume to access song files
-
-    ```bash
-    docker run --rm -v $(pwd):/music spotdl download [trackUrl]
-    ```
-
-  - For Docker Compose and permission-managed Docker downloads, see
-    [the Docker section in `/docs/index.md`](docs/index.md#docker).
-
-  - Build from source
-
-    ```bash
-    git clone https://github.com/spotDL/spotify-downloader && cd spotify-downloader
-    pip install uv
-    uv sync
-    uv run scripts/build.py
-    ```
-
-    An executable is created in `spotify-downloader/dist/`.
-
-</details>
-
-### Installing FFmpeg
-
-FFmpeg is required for spotDL. If using FFmpeg only for spotDL, you can simply install FFmpeg to your spotDL installation directory:
-`spotdl --download-ffmpeg`
-
-We recommend the above option, but if you want to install FFmpeg system-wide,
-follow these instructions
-
-- [Windows Tutorial](https://windowsloop.com/install-ffmpeg-windows-10/)
-- OSX - `brew install ffmpeg`
-- Linux - `sudo apt install ffmpeg` or use your distro's package manager
-
-### Installing Deno
-
-We strongly recommend installing Deno. spotDL uses yt-dlp for YouTube downloads, and some
-videos require Deno to download successfully. Without Deno, spotDL may fail to download some
-songs, including videos marked as "made for kids".
-
-If using Deno only for spotDL, install Deno to your spotDL directory:
-`spotdl --download-deno`
-
-If you want to install Deno system-wide instead, follow the
-[official Deno installation guide](https://docs.deno.com/runtime/getting_started/installation/).
-
-## Usage
-
-Using SpotDL without options:
-
-```sh
-spotdl [urls]
+```bash
+git clone -b main https://github.com/ArveeCodes/spotify-downloader.git
+cd spotify-downloader
+pip install -e .
 ```
 
-You can run _spotDL_ as a package if running it as a script doesn't work:
+**2. Install FFmpeg** (required), and Deno (recommended, some downloads need it)
 
-```sh
-python -m spotdl [urls]
+```bash
+python -m spotdl --download-ffmpeg
+python -m spotdl --download-deno
 ```
 
-General usage:
+**3. Start the web app**
 
-```sh
+```bash
+python -m spotdl web
+```
+
+Then open **http://localhost:8800**.
+
+## Using the web app
+
+| Page | What it does |
+| --- | --- |
+| **Home** | Search, or paste a Spotify link and press Enter. |
+| **Search results** | Artists, albums and songs in separate sections. Each row has a download button and a link to open it in Spotify. |
+| **Link download** | Pasting a link shows a live card with progress, a song counter for collections, and the final result. |
+| **Downloads** | Everything downloaded in this session, with progress and a save button for finished files. |
+| **Settings** (sliders icon) | Audio providers, lyrics providers and output format. |
+
+The dot in the top bar shows the connection: blue when connected, red when disconnected (click it to reconnect).
+
+## Where downloads are saved
+
+Downloads go to the folder set in your config file:
+
+- **Windows:** `C:\Users\<you>\.spotdl\config.json`
+- **macOS / Linux:** `~/.spotdl/config.json`
+
+To save straight to a folder on disk, set these two keys:
+
+```json
+"web_use_output_dir": true,
+"output": "E:/Music Downloader/downloads/{artists} - {title}.{output-ext}"
+```
+
+- Single songs land directly in that folder.
+- Albums, playlists and artists get their own subfolder, e.g. `downloads/After Hours/`.
+- `output` also applies to the command line, so both save to the same place.
+- With `web_use_output_dir` set to `false`, files go to a temporary folder that's cleared when the server stops, and you save them from the Downloads page instead.
+
+Restart the server after changing the config. If you don't have a config file yet, `python -m spotdl --generate-config` creates one (it overwrites an existing file).
+
+See [docs/usage.md](docs/usage.md) for all output template variables.
+
+## Command line
+
+```bash
 spotdl [operation] [options] QUERY
 ```
 
-There are different **operations** spotDL can perform. The _default_ is `download`, which simply downloads the songs from YouTube and embeds metadata.
+The default operation is `download`, and the query is usually one or more Spotify links:
 
-The **query** for spotDL is usually a list of Spotify URLs, but for some operations like **sync**, only a single link or file is required.
-For a list of all **options** use ```spotdl -h```
+```bash
+spotdl download https://open.spotify.com/album/4yP0hdKOZPNshxUOjY0cZj
+```
 
-<details>
-<summary style="font-size:1em"><strong>Supported operations</strong></summary>
+| Operation | Purpose |
+| --- | --- |
+| `download` | Download songs from Spotify links or search queries (default). |
+| `web` | Start the web app. |
+| `save` | Save metadata only: `spotdl save [query] --save-file name.spotdl` |
+| `sync` | Keep a folder in sync with a playlist: `spotdl sync [query] --save-file name.spotdl`, then later `spotdl sync name.spotdl` |
+| `url` | Get a user-friendly URL for each song in the query. |
+| `meta` | Update metadata for existing song files. |
 
-- `download`: Downloads songs from Spotify URLs or search queries (default operation).
+Run `spotdl -h` for every option. More detail is in [docs/usage.md](docs/usage.md) and [docs/installation.md](docs/installation.md); for problems see [docs/troubleshooting.md](docs/troubleshooting.md).
 
-- `save`: Saves only the metadata from Spotify without downloading anything.
-    - Usage:
-        `spotdl save [query] --save-file {filename}.spotdl`
+## Project layout
 
-- `web`: Starts a web interface instead of using the command line.
-    - Usage:
-        `spotdl web`
+```
+spotdl/
+├── web/
+│   ├── routes.py          # Pages and live (SSE) endpoints: search, link downloads, progress
+│   ├── api.py             # REST endpoints, including file downloads
+│   ├── components/        # Jinja2 templates (UI)
+│   └── static/assets/     # Logo, Datastar, Tailwind, DaisyUI
+├── utils/
+│   ├── spotapi_cache.py   # Shares one Spotify session across requests (big speedup)
+│   ├── web.py             # Client sessions and app state
+│   └── spotify.py         # Spotify client setup
+└── download/
+    └── downloader.py      # Matching, downloading and tagging
+```
 
-- `url`: Get user-friendly URL for each song from the query.
-    - Usage:
-        `spotdl url [query]`
+The web UI is server-rendered: Jinja2 templates, with live updates patched in over server-sent events by [Datastar](https://data-star.dev). Styling uses Tailwind CSS 4 and DaisyUI 5.
 
-- `sync`: Updates directories. Compares the directory with the current state of the playlist. Newly added songs will be downloaded and removed songs will be deleted. No other songs will be downloaded and no other files will be deleted.
+### Performance notes
 
-    - Usage:
-        `spotdl sync [query] --save-file {filename}.spotdl`
+- **One API call per search**: results are built straight from the search response instead of re-fetching every track, then cached for five minutes.
+- **Shared Spotify session**: the session is negotiated once and reused. Its query hashes are saved to `~/.spotdl/spotapi-hashes.json`, so restarts are fast too.
+- **Quiet live updates**: progress streams only send a patch when something actually changed.
 
-        This creates a new **sync** file. To update the directory in the future, use:
+## Legal
 
-        `spotdl sync {filename}.spotdl`
-
-- `meta`: Updates metadata for the provided song files.
-
-</details>
-
-## Music Sourcing and Audio Quality
-
-spotDL uses YouTube as a source for music downloads. This method is used to avoid any issues related to downloading music from Spotify.
+Kraken does not download audio from Spotify. It matches each track with an audio source from the configured providers and tags the file with Spotify's metadata.
 
 > **Note**
-> Users are responsible for their actions and potential legal consequences. We do not support unauthorized downloading of copyrighted material and take no responsibility for user actions.
+> Users are responsible for their actions and any legal consequences. We do not support unauthorized downloading of copyrighted material and take no responsibility for how this software is used.
 
-### Audio Quality
+## Credits and license
 
-spotDL downloads music from YouTube and is designed to always download the highest possible bitrate; which is 128 kbps for regular users and 256 kbps for YouTube Music premium users.
+Built on [spotDL](https://github.com/spotDL/spotify-downloader) by the spotDL developers. Licensed under the [MIT License](LICENSE).
 
-Check the [Audio Formats](docs/usage.md#audio-formats-and-quality) page for more info.
-
-## Contributing
-
-Interested in contributing? Check out our [CONTRIBUTING.md](docs/CONTRIBUTING.md) to find
-resources around contributing along with a guide on how to set up a development environment.
-
-### Join our amazing community as a code contributor
-
-<a href="https://github.com/spotDL/spotify-downloader/graphs/contributors">
-  <img class="dark-light" src="https://contrib.rocks/image?repo=spotDL/spotify-downloader&anon=0&columns=25&max=100&r=true" />
-</a>
-
-## License
-
-This project is Licensed under the [MIT](/LICENSE) License.
+Want to contribute? See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).

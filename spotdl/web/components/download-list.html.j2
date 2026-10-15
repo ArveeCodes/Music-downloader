@@ -1,76 +1,42 @@
-<div id="download-list" class="fade-in">
+{% from "icons.html.j2" import icon %}
+<div id="download-list">
     {% if client_song_downloads|length == 0 %}
-    <div class="flex flex-col items-center justify-center py-16 gap-4">
-        <div class="relative">
-            <iconify-icon icon="clarity:download-cloud-line" style="font-size: 56px" class="text-base-content/15"></iconify-icon>
-        </div>
-        <div class="text-center">
-            <p class="font-medium text-base-content/60 mb-1">No downloads yet</p>
-            <p class="text-sm text-base-content/40">Search for a song to start downloading</p>
-        </div>
-        <button class="btn btn-primary btn-sm gap-2" data-on-click="goto('/')">
-            <iconify-icon icon="clarity:search-line" style="font-size: 16px"></iconify-icon>
-            Search
-        </button>
+    <div class="flex flex-col items-center justify-center py-24 fade-in">
+        <span class="text-faint mb-4">{{ icon('download', 36) }}</span>
+        <p class="text-muted mb-1">No downloads yet</p>
+        <p class="text-faint text-sm mb-6">Search a song or paste a Spotify link to get started</p>
+        <button class="btn-accent text-sm" data-on-click="goto('/')">Search music</button>
     </div>
     {% else %}
-    <div class="space-y-2">
-        {% for dl in client_song_downloads %}
-        <div key="{{ loop.index }}"
-            class="flex items-center gap-3 p-3 rounded-xl bg-base-100 border border-base-content/5 shadow-sm"
-            style="animation: fadeIn 0.2s ease-out {{ loop.index0 * 0.03 }}s both">
-
-            <div class="avatar flex-shrink-0">
-                <div class="w-12 h-12 rounded-lg ring-1 ring-base-content/10">
-                    <img src="{{ dl.song.cover_url }}" alt="{{ dl.song.name }}" />
-                </div>
-            </div>
+    <div class="panel">
+        {% for d in client_song_downloads %}
+        <div class="row">
+            <img src="{{ d.song.cover_url|e }}" class="w-11 h-11 rounded-lg object-cover shrink-0" loading="lazy" />
 
             <div class="flex-1 min-w-0">
-                <p class="font-medium text-sm truncate">{{ dl.song.name }}</p>
-                <p class="text-xs text-base-content/50 truncate">
-                    {{ dl.song.artist }}
-                    {% if dl.song.album_name %} &middot; {{ dl.song.album_name }}{% endif %}
+                <p class="text-sm font-medium truncate">{{ d.song.name|e }}</p>
+                <p class="text-xs text-faint truncate mt-0.5">
+                    {{ d.song.artist|e }}{% if d.song.album_name %} &mdash; {{ d.song.album_name|e }}{% endif %}
                 </p>
-                {% if dl.message != "Error" and dl.progress > 0 and dl.progress < 100 %}
-                <div class="mt-1.5 flex items-center gap-2">
-                    <progress class="progress progress-primary h-1.5 flex-1 progress-bar-animated"
-                        value="{{ dl.progress }}" max="100"></progress>
-                    <span class="text-[11px] font-mono text-primary tabular-nums">{{ dl.progress }}%</span>
-                </div>
+                {% if d.progress > 0 and d.progress < 100 %}
+                <progress class="progress-min w-full mt-2" value="{{ d.progress }}" max="100"></progress>
                 {% endif %}
             </div>
 
-            <div class="flex items-center gap-2 flex-shrink-0">
-                {% if dl.message == "Error" %}
-                <div class="tooltip tooltip-left" data-tip="Download failed">
-                    <span class="badge badge-error badge-sm gap-1">
-                        <iconify-icon icon="clarity:error-standard-line" style="font-size: 12px"></iconify-icon>
-                        Error
-                    </span>
-                </div>
-
-                {% elif dl.progress == 100 %}
-                <span class="badge badge-success badge-sm gap-1">
-                    <iconify-icon icon="clarity:check-line" style="font-size: 12px"></iconify-icon>
-                    Done
-                </span>
-                {% if dl.path %}
-                <a class="btn btn-ghost btn-xs btn-circle"
-                    data-attr="{href:'/api/download/file?file={{ dl.path|urlencode|replace('/', '%2f') }}&client_id=' + $client_id}"
-                    download title="Save file">
-                    <iconify-icon icon="clarity:download-line" style="font-size: 16px"></iconify-icon>
+            <div class="flex items-center gap-2 shrink-0">
+                {% if d.message == "Error" %}
+                <span class="px-2 py-0.5 rounded-md text-xs font-medium"
+                    style="background: rgba(var(--danger-rgb), 0.14); color: var(--danger);">Failed</span>
+                {% elif d.progress == 100 %}
+                <a class="icon-btn solid" title="Save file"
+                    data-attr="{href:'/api/download/file?file={{ d.path|urlencode|replace('/', '%2f') }}&client_id=' + $client_id}" download>
+                    {{ icon('download', 16) }}
                 </a>
-                {% endif %}
-
-                {% elif dl.progress == 0 %}
-                <span class="flex items-center gap-1.5 text-xs text-base-content/50">
-                    <span class="loading loading-spinner loading-xs text-primary"></span>
-                    {{ dl.message }}
-                </span>
-
+                {% elif d.progress == 0 %}
+                <span class="loading loading-spinner loading-xs" style="color: var(--accent);"></span>
+                <span class="text-xs text-faint hidden sm:inline">{{ d.message|e }}</span>
                 {% else %}
-                <span class="text-xs text-base-content/40 hidden sm:inline">{{ dl.message }}</span>
+                <span class="text-xs font-mono text-accent">{{ d.progress }}%</span>
                 {% endif %}
             </div>
         </div>

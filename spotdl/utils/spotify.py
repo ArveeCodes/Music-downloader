@@ -160,7 +160,17 @@ def _init_official_spotify_client(**kwargs) -> _OfficialSpotifyClient:
 def _init_free_spotify_client(**kwargs) -> Any:
     """
     Initialize the default SpotipyFree client.
+    Installs the spotapi shared-session cache first: without it every call
+    re-negotiates the Spotify web-player session (~20s per request).
     """
+
+    from spotdl.utils.spotapi_cache import (
+        apply_spotapi_cache,
+        prewarm_spotapi_session,
+    )
+
+    if apply_spotapi_cache():
+        prewarm_spotapi_session()
 
     return FreeSpotify(**kwargs)
 

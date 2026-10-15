@@ -66,15 +66,14 @@ async def songs_from_url(url: str) -> List[Song]:
     """
 
     def _fetch():
+        # fetch_songs=False: the list metadata response already contains the
+        # songs, so don't re-fetch every track (3 API calls per song)
         if "playlist" in url:
-            playlist = Playlist.from_url(url)
-            return list(map(Song.from_url, playlist.urls))
+            return Playlist.from_url(url, fetch_songs=False).songs
         if "album" in url:
-            album = Album.from_url(url)
-            return list(map(Song.from_url, album.urls))
+            return Album.from_url(url, fetch_songs=False).songs
         if "artist" in url:
-            artist = Artist.from_url(url)
-            return list(map(Song.from_url, artist.urls))
+            return Artist.from_url(url, fetch_songs=False).songs
         return [Song.from_url(url)]
 
     return await asyncio.to_thread(_fetch)

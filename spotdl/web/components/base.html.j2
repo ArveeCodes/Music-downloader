@@ -1,139 +1,261 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="forest">
+<html lang="en" data-theme="night">
 
 <head>
-    <title>spotDL</title>
-    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <title>Kraken</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/spotdl.svg">
+    <link rel="alternate icon" type="image/x-icon" href="/assets/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Download Spotify songs with metadata" />
-
+    <meta name="theme-color" content="#08142b" />
     <script type="module" src="/assets/datastar.js"></script>
     <link href="/assets/daisyui@5.css" rel="stylesheet" type="text/css" />
     <link href="/assets/themes.css" rel="stylesheet" type="text/css" />
     <script src="/assets/tailwindcss/browser@4.js"></script>
+    <!-- Still required by templates that render <iconify-icon> elements -->
     <script src="/assets/iconify-icon/iconify-icon.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #08142b;
+            --surface: #0d1d3a;
+            --surface-2: #132850;
+            --line: rgba(146, 176, 235, 0.13);
+            --text: #eaf0fb;
+            --muted: rgba(234, 240, 251, 0.70);
+            --faint: rgba(234, 240, 251, 0.50);
+            --accent: #5b9bff;
+            --accent-rgb: 91, 155, 255;
+            --accent-ink: #061226;
+            --danger: #ff7a7a;
+            --danger-rgb: 255, 122, 122;
+            --warn: #f2b84b;
+        }
+
+        html {
+            background: var(--bg);
+        }
+
+        html, body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text);
+            font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Static glow at the top of the page — painted once, no animation */
+        body {
+            background:
+                radial-gradient(1100px 520px at 50% -160px, rgba(var(--accent-rgb), 0.16), transparent 70%),
+                var(--bg);
+        }
+
+        ::selection { background: rgba(var(--accent-rgb), 0.35); }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(146, 176, 235, 0.2); border-radius: 8px; }
+
+        /* Panels and rows */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 14px;
+            transition: background 0.15s ease;
+        }
+        .row + .row { border-top: 1px solid var(--line); }
+        .row:hover { background: var(--surface-2); }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--faint);
+            padding: 0 4px;
+            margin-bottom: 8px;
+        }
+
+        /* Buttons */
+        .btn-accent {
+            background: var(--accent);
+            color: var(--accent-ink);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 10px 22px;
+            cursor: pointer;
+            transition: filter 0.15s ease;
+        }
+        .btn-accent:hover { filter: brightness(1.08); }
+        .btn-accent:active { filter: brightness(0.92); }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 50%;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--faint);
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+        .icon-btn.solid {
+            background: var(--accent);
+            color: var(--accent-ink);
+        }
+        .icon-btn.solid:hover { background: var(--accent); filter: brightness(1.08); color: var(--accent-ink); }
+        .icon-btn.soft { background: rgba(var(--accent-rgb), 0.14); color: var(--accent); }
+        .icon-btn.soft:hover { background: rgba(var(--accent-rgb), 0.22); color: var(--accent); }
+        .icon-btn.danger-soft { background: rgba(var(--danger-rgb), 0.14); color: var(--danger); }
+        .icon-btn.danger-soft:hover { background: rgba(var(--danger-rgb), 0.22); color: var(--danger); }
+
+        /* Inputs */
+        .input-min {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            width: 100%;
+        }
+        .input-min::placeholder { color: var(--faint); }
+        .search-shell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .search-shell:focus-within {
+            border-color: rgba(var(--accent-rgb), 0.6);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+        }
+        /* DaisyUI 5 colors checkboxes via --input-color (fill) and color (check mark) */
+        .checkbox:checked { --input-color: var(--accent); color: var(--accent-ink); }
+
+        /* Status dot */
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-off { background: var(--faint); }
+        .dot-on { background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.8); }
+        .dot-err { background: var(--danger); box-shadow: 0 0 6px rgba(var(--danger-rgb), 0.8); }
+
+        /* Progress */
+        .progress-min { height: 3px; border-radius: 99px; background: rgba(146, 176, 235, 0.14); }
+        .progress-min::-webkit-progress-bar { background: rgba(146, 176, 235, 0.14); border-radius: 99px; }
+        .progress-min::-webkit-progress-value { background: var(--accent); border-radius: 99px; transition: width 0.4s ease; }
+        .progress-min::-moz-progress-bar { background: var(--accent); border-radius: 99px; }
+        .progress-bar-animated { transition: width 0.4s ease-out; }
+
+        /* Single, subtle entrance */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.25s ease-out both; }
+        @media (prefers-reduced-motion: reduce) {
+            .fade-in { animation: none; }
+        }
+
+        /* Navbar */
+        .nav-shell {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(8, 20, 43, 0.9);
+            border-bottom: 1px solid var(--line);
+        }
+
+        /* Modal */
+        .modal-box.minimal {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+        }
+
+        /* Brand wordmark: caps, wide tracking, white-to-blue gradient.
+           The negative margin cancels the tracking added after the last
+           letter so centered wordmarks stay centered. */
+        .wordmark {
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            margin-right: -0.16em;
+            background: linear-gradient(180deg, #ffffff 35%, #9cc2ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .text-accent { color: var(--accent); }
+        .text-muted { color: var(--muted); }
+        .text-faint { color: var(--faint); }
+    </style>
+
+    <script>
+        function goto(location) { window.location.href = location; }
+        function storageGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+        function storageSet(key, val) { try { localStorage.setItem(key, val); } catch (e) { } }
+
+        // Rotate the navbar search placeholder client-side
+        (function () {
+            var hints = [
+                "Search songs, albums, artists...",
+                "Drive - Miley Cyrus",
+                "Paste a Spotify link",
+                "All Eyes On Me - Bo Burnham",
+                "After Hours - The Weeknd",
+                "Lil Wayne"
+            ];
+            var i = 0;
+            setInterval(function () {
+                var el = document.getElementById('nav-search');
+                if (el && !el.value && document.activeElement !== el) {
+                    i = (i + 1) % hints.length;
+                    el.placeholder = hints[i];
+                }
+            }, 4000);
+        })();
+    </script>
 </head>
 
-<style>
-    iconify-icon {
-        display: inline-block;
-        width: 1em;
-        height: 1em;
-    }
-
-    html, body {
-        min-height: 100vh;
-        scroll-behavior: smooth;
-    }
-
-    * {
-        transition-property: background-color, border-color, color, opacity;
-        transition-duration: 150ms;
-        transition-timing-function: ease-out;
-    }
-
-    .fade-in {
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes pulse-glow {
-        0%, 100% { box-shadow: 0 0 0 0 oklch(var(--p) / 0.3); }
-        50% { box-shadow: 0 0 16px 4px oklch(var(--p) / 0.15); }
-    }
-
-    .toast-item {
-        animation: slideUp 0.3s ease-out;
-    }
-
-    .progress-bar-animated {
-        transition: width 0.4s ease-out;
-    }
-
-    .card-hover {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .card-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px -5px oklch(0 0 0 / 0.2);
-    }
-
-    .glow-border {
-        animation: pulse-glow 2s ease-in-out infinite;
-    }
-</style>
-
-<script>
-    function goto(location) {
-        window.location.href = location;
-    }
-
-    (function() {
-        const saved = localStorage.getItem('spotdl-theme');
-        if (saved) {
-            document.documentElement.setAttribute('data-theme', saved);
-        }
-    })();
-
-    function setTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('spotdl-theme', theme);
-    }
-
-    function showToast(message, type = 'info', duration = 3000) {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        const toast = document.createElement('div');
-        toast.className = 'alert alert-' + type + ' shadow-lg toast-item';
-        toast.innerHTML = '<span>' + message + '</span>';
-        container.appendChild(toast);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(20px)';
-            toast.style.transition = 'all 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
-    }
-</script>
-
 <body data-signals="{'client_id': ''}"
-    data-on-load="$client_id = localStorage.getItem('client_id'); @get('/client/load')"
-    class="bg-base-300">
+    data-on-load="$client_id = storageGet('client_id') || ''; @get('/client/load')">
 
     <div class="min-h-screen flex flex-col">
         {% include "navbar.html.j2" %}
-
-        <main class="flex-1">
-            {% block content %}
-            {% endblock content %}
-        </main>
-
+        <div class="flex-1">
+            {% block content %}{% endblock content %}
+        </div>
         {% include "footer.html.j2" %}
 
+        <div id="toast-container" class="toast toast-end toast-bottom z-50"></div>
+
         <span id="component-settings"
-            data-on-signal-patch="@get('/client/component/settings-content'); localStorage.setItem('client_id', $client_id);"
+            data-on-signal-patch="@get('/client/component/settings-content'); storageSet('client_id', $client_id);"
             data-on-signal-patch-filter="{include: /client_id/}">
         </span>
-
         <dialog id="settings_modal" class="modal modal-bottom sm:modal-middle">
             <div id="component-settings-content"></div>
-            <form method="dialog" class="modal-backdrop">
-                <button>close</button>
-            </form>
+            <form method="dialog" class="modal-backdrop"><button>close</button></form>
         </dialog>
-
-        <div id="toast-container" class="toast toast-end toast-bottom z-50 gap-2"></div>
     </div>
-
 </body>
 
 </html>

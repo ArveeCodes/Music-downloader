@@ -425,13 +425,17 @@ class Downloader:
         return None
 
     def search_and_download(  # pylint: disable=R0911
-        self, song: Song
+        self, song: Song, output_template: Optional[str] = None
     ) -> Tuple[Song, Optional[Path]]:
         """
         Search for the song and download it.
 
         ### Arguments
         - song: The song to download.
+        - output_template: Optional output path template that overrides
+          settings["output"] for this download only. Lets concurrent
+          downloads (e.g. a playlist batch and a single song) use different
+          destinations without racing on shared settings.
 
         ### Returns
         - tuple with the song and the path to the downloaded file if successful.
@@ -475,7 +479,7 @@ class Downloader:
         # Create the output file path
         output_file = create_file_name(
             song=song,
-            template=self.settings["output"],
+            template=output_template or self.settings["output"],
             file_extension=self.settings["format"],
             restrict=self.settings["restrict"],
             file_name_length=self.settings["max_filename_length"],

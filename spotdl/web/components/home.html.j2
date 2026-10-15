@@ -1,71 +1,56 @@
 {% extends "base.html.j2" %}
-
 {% block content %}
+{% from "icons.html.j2" import icon %}
+<span id="component-home">
+    <div class="flex items-center justify-center px-4 py-12" style="min-height: calc(100vh - 140px);">
+        <div class="w-full max-w-2xl mx-auto text-center fade-in">
 
-<div class="hero min-h-[calc(100vh-4rem)]">
-    <div class="hero-content text-center max-w-2xl mx-auto px-4">
-        <div class="fade-in">
-            <div class="flex justify-center mb-6">
-                <div class="relative">
-                    <img src="/assets/spotdl.svg" class="w-24 sm:w-28 relative z-10" alt="spotDL" />
-                    <div class="absolute inset-0 blur-3xl opacity-20 bg-primary scale-150"></div>
-                </div>
-            </div>
+            <img src="/assets/spotdl.svg" class="w-16 h-16 mx-auto mb-6" alt="Kraken" />
 
-            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-3">
-                spot<span class="text-primary">DL</span>
+            <h1 class="text-5xl sm:text-6xl font-black mb-4">
+                <span class="wordmark">Kraken</span>
             </h1>
-            <p class="text-base-content/60 text-lg mb-8 max-w-md mx-auto">
-                Download your Spotify & YouTube Music playlists, albums, and songs with full metadata
+            <p class="text-lg text-muted mb-10">
+                Paste a link. Keep the music.
             </p>
 
-            <div class="w-full max-w-lg mx-auto mb-6" data-signals="{home_search: ''}">
-                <div class="join w-full shadow-xl glow-border rounded-xl">
-                    <input type="text" placeholder="Paste a Spotify or YouTube Music URL, or search for a song..."
-                        class="input input-lg join-item w-full bg-base-100 border-base-content/10 focus:border-primary/50 text-base"
+            <div class="max-w-xl mx-auto" data-signals="{home_search: ''}">
+                <div class="search-shell pl-4 pr-1.5 h-12">
+                    <span class="text-faint shrink-0">{{ icon('search', 17) }}</span>
+                    <input type="text"
+                        placeholder="Search or paste a Spotify link..."
+                        class="input-min text-base h-full"
                         data-bind="home_search"
-                        data-on-keydown="evt.key === 'Enter' && $home_search && goto('/search?q=' + encodeURIComponent($home_search))">
-                    <button class="btn btn-lg btn-primary join-item px-6"
-                        data-on-click="$home_search && goto('/search?q=' + encodeURIComponent($home_search))">
-                        <iconify-icon icon="clarity:search-line" style="font-size: 22px"></iconify-icon>
+                        data-on-keydown="if (evt.key === 'Enter' && $home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))" />
+                    <button class="btn-accent text-sm shrink-0" style="padding: 7px 18px;"
+                        data-on-click="if ($home_search.trim()) goto('/search?q=' + encodeURIComponent($home_search))">
+                        Search
                     </button>
+                </div>
+                <p class="text-faint text-xs mt-4">
+                    Songs &middot; Albums &middot; Playlists &middot; Artists
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-14 text-left">
+                <div class="panel p-4">
+                    <span class="text-accent">{{ icon('search', 18) }}</span>
+                    <p class="text-sm font-medium mt-3">Search or paste</p>
+                    <p class="text-xs text-faint mt-1">Any Spotify song, album, playlist or artist</p>
+                </div>
+                <div class="panel p-4">
+                    <span class="text-accent">{{ icon('download', 18) }}</span>
+                    <p class="text-sm font-medium mt-3">Watch it download</p>
+                    <p class="text-xs text-faint mt-1">Live progress for every track</p>
+                </div>
+                <div class="panel p-4">
+                    <span class="text-accent">{{ icon('disc', 18) }}</span>
+                    <p class="text-sm font-medium mt-3">Keep it organized</p>
+                    <p class="text-xs text-faint mt-1">Albums and playlists get their own folder, with cover art and lyrics</p>
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-2 justify-center mb-10">
-                <span class="badge badge-outline badge-lg gap-1.5 text-base-content/50 hover:text-base-content hover:border-primary/50 cursor-default transition-colors">
-                    <iconify-icon icon="clarity:music-note-line" style="font-size: 14px"></iconify-icon>
-                    Songs
-                </span>
-                <span class="badge badge-outline badge-lg gap-1.5 text-base-content/50 hover:text-base-content hover:border-primary/50 cursor-default transition-colors">
-                    <iconify-icon icon="clarity:cd-dvd-line" style="font-size: 14px"></iconify-icon>
-                    Albums
-                </span>
-                <span class="badge badge-outline badge-lg gap-1.5 text-base-content/50 hover:text-base-content hover:border-primary/50 cursor-default transition-colors">
-                    <iconify-icon icon="clarity:list-line" style="font-size: 14px"></iconify-icon>
-                    Playlists
-                </span>
-                <span class="badge badge-outline badge-lg gap-1.5 text-base-content/50 hover:text-base-content hover:border-primary/50 cursor-default transition-colors">
-                    <iconify-icon icon="clarity:users-line" style="font-size: 14px"></iconify-icon>
-                    Artists
-                </span>
-                <span class="badge badge-outline badge-lg gap-1.5 cursor-default transition-colors"
-                      style="color: #ff0000; border-color: #ff000040;" title="YouTube Music playlists &amp; albums supported">
-                    <iconify-icon icon="mdi:youtube-music" style="font-size: 14px"></iconify-icon>
-                    YouTube Music
-                </span>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <button class="btn btn-ghost btn-sm gap-2 text-base-content/50" onclick="goto('/downloads')">
-                    <iconify-icon icon="clarity:download-cloud-line" style="font-size: 16px"></iconify-icon>
-                    View downloads
-                </button>
-                <span class="text-base-content/20 hidden sm:inline">|</span>
-                <span class="text-xs text-base-content/30">v{{ __version__ }}</span>
-            </div>
         </div>
     </div>
-</div>
-
+</span>
 {% endblock content %}

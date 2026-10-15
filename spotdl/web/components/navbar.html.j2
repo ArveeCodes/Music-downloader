@@ -1,79 +1,39 @@
-<div class="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-40 border-b border-base-content/5 px-4 shadow-sm">
+{% from "icons.html.j2" import icon %}
+<div class="nav-shell">
+  <div class="max-w-5xl mx-auto flex items-center gap-3 px-4 h-14">
 
-  <div class="navbar-start gap-2">
-    <a class="flex items-center gap-2 cursor-pointer group" onclick="goto('/')">
-      <img src="../assets/spotdl.svg" class="w-8 h-8 group-hover:scale-110 transition-transform" alt="spotDL" />
-      <span class="font-bold text-lg tracking-tight hidden sm:inline">spotDL</span>
-    </a>
-  </div>
+    <!-- Logo -->
+    <div class="flex items-center gap-2.5 cursor-pointer shrink-0 select-none" data-on-click="goto('/')">
+      <img src="/assets/spotdl.svg" class="w-7 h-7" alt="Kraken" />
+      <span class="wordmark text-sm font-extrabold hidden sm:inline">Kraken</span>
+    </div>
 
-  <div class="navbar-center w-full max-w-md px-2">
-    <div id="search-input" data-signals="{search_term: '', loading: false}" class="w-full">
-      <div class="join w-full">
-        <input id="nav-search-input" type="text"
-            class="input input-sm sm:input-md join-item w-full bg-base-200/50 focus:bg-base-200 border-base-content/10 focus:border-primary/50 placeholder:text-base-content/40"
-            data-bind="search_term"
-            data-on-keydown="evt.key === 'Enter' && $search_term && goto('/search?q=' + encodeURIComponent($search_term))" />
-        <button class="btn btn-sm sm:btn-md btn-primary join-item px-3"
-            data-on-click="$search_term && goto('/search?q=' + encodeURIComponent($search_term))">
-            <iconify-icon icon="clarity:search-line" style="font-size: 18px"></iconify-icon>
-        </button>
+    <!-- Search -->
+    <div class="flex-1 max-w-md mx-auto" data-signals="{search_term: ''}">
+      <div class="search-shell px-3 h-9">
+        <span class="text-faint shrink-0">{{ icon('search', 15) }}</span>
+        <input id="nav-search" type="text" placeholder="Search songs, albums, artists..."
+          class="input-min text-sm h-full"
+          data-bind="search_term"
+          data-on-keydown="if(evt.key==='Enter' && $search_term.trim()) goto('/search?q=' + encodeURIComponent($search_term))" />
       </div>
     </div>
-  </div>
 
-  <div class="navbar-end gap-1">
-    <div id="status" class="btn btn-ghost btn-circle btn-sm">
-      <iconify-icon icon="clarity:disconnect-line" style="font-size: 18px"></iconify-icon>
-    </div>
+    <!-- Actions -->
+    <div class="flex items-center gap-1 shrink-0">
+      <div id="status" class="icon-btn" title="Connecting...">
+        <span class="dot dot-off"></span>
+      </div>
 
-    <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm">
-      <input type="checkbox" id="theme-toggle"
-          data-on-change="setTheme(evt.target.checked ? 'light' : 'forest')" />
-      <iconify-icon icon="clarity:sun-line" class="swap-on" style="font-size: 18px"></iconify-icon>
-      <iconify-icon icon="clarity:moon-line" class="swap-off" style="font-size: 18px"></iconify-icon>
-    </label>
+      {% include "settings.html" %}
 
-    {% include "settings.html" %}
-
-    <div class="indicator">
-      <span class="indicator-item badge badge-primary badge-xs p-1 text-[10px] font-bold">
-        <span id="overall-completed-tasks">0</span>
-      </span>
-      <a class="btn btn-ghost btn-circle btn-sm" data-on-click="goto('/downloads')">
-        <iconify-icon icon="clarity:download-cloud-line" style="font-size: 18px"></iconify-icon>
-      </a>
+      <button class="icon-btn relative" title="Downloads" data-on-click="goto('/downloads')">
+        {{ icon('download', 18) }}
+        <span class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center font-bold"
+          style="background: var(--accent); color: var(--accent-ink); font-size: 10px; line-height: 1;">
+          <p id="overall-completed-tasks" class="text-xs">0</p>
+        </span>
+      </button>
     </div>
   </div>
 </div>
-
-<script>
-(function() {
-    var saved = localStorage.getItem('spotdl-theme');
-    var toggle = document.getElementById('theme-toggle');
-    if (toggle && saved === 'light') toggle.checked = true;
-
-    var placeholders = [
-        "All Eyes On Me - Bo Burnham",
-        "https://open.spotify.com/track/4vfN00PlILRXy5dcXHQE9M",
-        "Lil Wayne",
-        "Drive - Miley Cyrus",
-        "Sofia - TMG",
-        "Lightning Crashes - Live",
-    ];
-    var idx = 0;
-    var input = document.getElementById('nav-search-input');
-    if (input && !input.value) {
-        input.placeholder = placeholders[0];
-        setInterval(function() {
-            idx = (idx + 1) % placeholders.length;
-            input.style.transition = 'opacity 0.2s';
-            input.style.opacity = '0.5';
-            setTimeout(function() {
-                input.placeholder = placeholders[idx];
-                input.style.opacity = '1';
-            }, 200);
-        }, 4000);
-    }
-})();
-</script>

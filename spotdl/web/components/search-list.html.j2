@@ -1,48 +1,107 @@
-<div id="search-list" data-signals="{'song_url': {}}" class="fade-in">
-    {% if songs|length == 0 %}
-    <div class="flex flex-col items-center justify-center py-16 gap-3">
-        <iconify-icon icon="clarity:search-line" style="font-size: 48px" class="text-base-content/20"></iconify-icon>
-        <p class="text-base-content/50">No results found</p>
-        <button class="btn btn-primary btn-sm" onclick="goto('/')">Try another search</button>
-    </div>
-    {% else %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {% for song in songs %}
-        <div key="{{loop.index0}}"
-            class="card bg-base-100 shadow-sm border border-base-content/5 card-hover overflow-hidden"
-            style="animation: fadeIn 0.3s ease-out {{ loop.index0 * 0.05 }}s both">
-            <figure class="relative aspect-square overflow-hidden">
-                <img src="{{ song.cover_url }}" class="w-full h-full object-cover"
-                    alt="{{ song.name }}" loading="lazy" />
-                <div class="absolute inset-0 bg-gradient-to-t from-base-100 via-transparent to-transparent opacity-80"></div>
-                <div class="absolute bottom-0 left-0 right-0 p-3">
-                    <h2 class="font-bold text-sm truncate text-base-content drop-shadow-md">
-                        {{ song.name }}
-                        {% if song.explicit %}
-                        <span class="badge badge-xs badge-error ml-1 align-middle">E</span>
-                        {% endif %}
-                    </h2>
-                    <p class="text-xs text-base-content/70 truncate drop-shadow-md">
-                        {% for artist in song.artists %}{% if not loop.first %}, {% endif %}{{ artist }}{% endfor %}
-                    </p>
-                </div>
-            </figure>
-            <div class="p-3 flex items-center justify-between gap-2">
-                <span class="text-xs text-base-content/40 truncate flex-1">{{ song.album_name }}</span>
-                <div class="flex gap-1">
-                    <a class="btn btn-ghost btn-xs btn-circle" href="{{ song.url }}" target="_blank"
-                        rel="noopener noreferrer" title="Open in Spotify">
-                        <iconify-icon icon="clarity:link-line" style="font-size: 14px"></iconify-icon>
-                    </a>
-                    <button id="download-{{song.url}}" class="btn btn-primary btn-xs btn-circle"
-                        data-on-click="$song_url = '{{song.url}}'; @post('/client/download/');"
-                        title="Download">
-                        <iconify-icon icon="clarity:download-line" style="font-size: 14px"></iconify-icon>
-                    </button>
-                </div>
+{% from "icons.html.j2" import icon %}
+<div id="search-list" data-signals="{'song_url': {}}" class="max-w-3xl mx-auto px-3 sm:px-4 py-5 fade-in">
+
+    {% if artists %}
+    <p class="section-label">Artists</p>
+    <div class="panel mb-6">
+        {% for artist in artists %}
+        <div class="row">
+            {% if artist.cover_url %}
+            <img src="{{ artist.cover_url|e }}" class="w-11 h-11 rounded-full object-cover shrink-0"
+                loading="lazy" alt="{{ artist.name|e }}" />
+            {% else %}
+            <div class="w-11 h-11 rounded-full flex items-center justify-center shrink-0 text-faint"
+                style="background: var(--surface-2);">{{ icon('user', 18) }}</div>
+            {% endif %}
+
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate flex items-center gap-1.5">
+                    {{ artist.name|e }}
+                    {% if artist.verified %}<span class="text-accent shrink-0">{{ icon('verified', 14) }}</span>{% endif %}
+                </p>
+                <p class="text-xs text-faint truncate mt-0.5">Artist &middot; downloads their entire catalog</p>
             </div>
+
+            <a class="icon-btn shrink-0" href="{{ artist.url|e }}" target="_blank" rel="noopener noreferrer"
+                title="Open in Spotify">{{ icon('external', 15) }}</a>
+            <button class="icon-btn solid shrink-0" title="Download all"
+                data-on-click="goto('/search?q=' + encodeURIComponent('{{ artist.url|e }}'))">
+                {{ icon('download', 16) }}
+            </button>
         </div>
         {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if albums %}
+    <p class="section-label">Albums</p>
+    <div class="panel mb-6">
+        {% for album in albums %}
+        <div class="row">
+            {% if album.cover_url %}
+            <img src="{{ album.cover_url|e }}" class="w-11 h-11 rounded-lg object-cover shrink-0"
+                loading="lazy" alt="{{ album.name|e }}" />
+            {% else %}
+            <div class="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 text-faint"
+                style="background: var(--surface-2);">{{ icon('disc', 18) }}</div>
+            {% endif %}
+
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate">{{ album.name|e }}</p>
+                <p class="text-xs text-faint truncate mt-0.5">
+                    {{ album.artist|e }} &middot; {{ album.album_type|e }}{% if album.year %} &middot; {{ album.year }}{% endif %}
+                </p>
+            </div>
+
+            <a class="icon-btn shrink-0" href="{{ album.url|e }}" target="_blank" rel="noopener noreferrer"
+                title="Open in Spotify">{{ icon('external', 15) }}</a>
+            <button class="icon-btn solid shrink-0" title="Download album"
+                data-on-click="goto('/search?q=' + encodeURIComponent('{{ album.url|e }}'))">
+                {{ icon('download', 16) }}
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if songs %}
+    {% if albums or artists %}<p class="section-label">Songs</p>{% endif %}
+    <div class="panel">
+        {% for song in songs %}
+        <div class="row">
+            <img src="{{ song.cover_url|e }}" class="w-11 h-11 rounded-lg object-cover shrink-0"
+                loading="lazy" alt="{{ song.name|e }}" />
+
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate">
+                    {{ song.name|e }}
+                    {% if song.explicit %}
+                    <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-sm text-[9px] font-bold ml-1 align-middle"
+                        style="background: rgba(255,255,255,0.12); color: var(--muted);">E</span>
+                    {% endif %}
+                </p>
+                <p class="text-xs text-faint truncate mt-0.5">
+                    {%- for artist in song.artists %}{% if not loop.first %}, {% endif %}{{ artist|e }}{% endfor %}
+                    {%- if song.album_name %} &mdash; {{ song.album_name|e }}{% endif %}
+                </p>
+            </div>
+
+            <a class="icon-btn shrink-0" href="{{ song.url|e }}" target="_blank" rel="noopener noreferrer"
+                title="Open in Spotify">{{ icon('external', 15) }}</a>
+            <button id="{{ safe_id(song.url) }}" class="icon-btn solid shrink-0" title="Download"
+                data-on-click="$song_url = '{{song.url|e}}'; @post('/client/download/');">
+                {{ icon('download', 16) }}
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not songs and not albums and not artists %}
+    <div class="flex flex-col items-center justify-center py-24 fade-in">
+        <span class="text-faint mb-4">{{ icon('search', 36) }}</span>
+        <p class="text-muted">No results found</p>
+        <p class="text-faint text-sm mt-1">Try a different search term</p>
     </div>
     {% endif %}
 </div>
